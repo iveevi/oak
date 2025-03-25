@@ -1,0 +1,6 @@
+[submodule "thirdparty/howler"]
+	path = thirdparty/howler
+	url = https://github.com/iveevi/howler.git
+[submodule "thirdparty/fmt"]
+	path = thirdparty/fmt
+	url = https://github.com/fmtlib/fmt.git
