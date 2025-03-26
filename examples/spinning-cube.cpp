@@ -1,4 +1,3 @@
-#include "image.hpp"
 #include <oak.hpp>
 
 // GLM for vector math
@@ -7,6 +6,10 @@
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 #include <vulkan/vulkan_structs.hpp>
+
+#ifndef SHADERS
+#define SHADERS "examples/shaders/bin/"
+#endif
 
 // Unit cube data
 static const std::vector <std::array <float, 6>> vertices {
@@ -142,8 +145,8 @@ int main()
 	}
 
 	// Shader programs
-	auto vertex = load_module(device, "examples/shaders/bin/spinning_cube.vert.spv");
-	auto fragment = load_module(device, "examples/shaders/bin/spinning_cube.frag.spv");
+	auto vertex = load_module(device, SHADERS "spinning-cube.vert.spv");
+	auto fragment = load_module(device, SHADERS "spinning-cube.frag.spv");
 
 	struct Vertex {
 		static vk::VertexInputBindingDescription binding() {

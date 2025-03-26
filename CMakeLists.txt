@@ -5,6 +5,7 @@ project(oak CXX)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(Vulkan REQUIRED)
+find_package(assimp REQUIRED)
 
 add_compile_definitions(HOWLER_PREFIX="oak")
 
@@ -30,11 +31,15 @@ add_library(oak STATIC
 
 target_link_libraries(oak PRIVATE howler glfw Vulkan::Vulkan)
 
-add_executable(hello_triangle
-	examples/hello_triangle.cpp)
+add_executable(hello-triangle
+	examples/hello-triangle.cpp)
 
-add_executable(spinning_cube
-	examples/spinning_cube.cpp)
+add_executable(spinning-cube
+	examples/spinning-cube.cpp)
 
-target_link_libraries(hello_triangle PRIVATE oak)
-target_link_libraries(spinning_cube  PRIVATE oak)
+add_executable(mesh-viewer
+	examples/mesh-viewer.cpp)
+
+target_link_libraries(hello-triangle PRIVATE oak)
+target_link_libraries(spinning-cube  PRIVATE oak)
+target_link_libraries(mesh-viewer    PRIVATE oak assimp)

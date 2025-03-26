@@ -2,6 +2,10 @@
 
 #include <oak.hpp>
 
+#ifndef SHADERS
+#define SHADERS "examples/shaders/bin/"
+#endif
+
 // Vertex buffer; position (2) and color (3)
 constexpr float triangles[][5] {
 	{  0.0f, -0.5f, 1.0f, 0.0f, 0.0f },
@@ -67,8 +71,8 @@ int main()
 	}
 
 	// Shader programs
-	auto vertex = load_module(device, "examples/shaders/bin/hello_triangle.vert.spv");
-	auto fragment = load_module(device, "examples/shaders/bin/hello_triangle.frag.spv");
+	auto vertex = load_module(device, SHADERS "hello-triangle.vert.spv");
+	auto fragment = load_module(device, SHADERS "hello-triangle.frag.spv");
 
 	struct Vertex {
 		static vk::VertexInputBindingDescription binding() {
