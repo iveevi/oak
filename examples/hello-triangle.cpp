@@ -17,10 +17,9 @@ int main()
 {
 	oak::configure();
 
-	auto device = Device::create(true);
-
-	auto window = Window::from(device, "Hello Triangle", vk::Extent2D(1920, 1080));
-	auto resources = DeviceResources::from(device);
+	auto device = oak::Device::create(true);
+	auto window = oak::Window::from(device, "Hello Triangle", vk::Extent2D(1920, 1080));
+	auto resources = oak::DeviceResources::from(device);
 
 	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
@@ -98,7 +97,7 @@ int main()
 		}
 	};
 
-	auto config = RasterPipelineInfo <Vertex> ()
+	auto config = oak::RasterPipelineInfo <Vertex> ()
 		.with_vertex(vertex)
 		.with_fragment(fragment)
 		.with_attachments(true);
@@ -108,7 +107,7 @@ int main()
 	// Vertex buffer
 	howl_info("vertex buffer size is {} bytes", sizeof(triangles));
 
-	auto vb = Buffer::from(device, sizeof(triangles), vk::BufferUsageFlagBits::eVertexBuffer);
+	auto vb = oak::Buffer::from(device, sizeof(triangles), vk::BufferUsageFlagBits::eVertexBuffer);
 
 	vb.upload(device, triangles, sizeof(triangles), 0);
 	vb.name(device, "Vertex Buffer");
@@ -174,7 +173,7 @@ int main()
 		}
 	};
 
-	primary_render_loop(device, resources, window, render, resize);
+	oak::primary_render_loop(device, resources, window, render, resize);
 
 	device.waitIdle();
 	window.destroy(device);

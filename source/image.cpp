@@ -2,6 +2,8 @@
 #include "image.hpp"
 #include "util.hpp"
 
+namespace oak {
+
 void Image::destroy(const Device &device)
 {
 	device.destroyImage(handle);
@@ -156,3 +158,5 @@ Image Image::from(const Device &device, const ImageInfo &config)
 
 	return result;
 }
+
+} // namespace oak

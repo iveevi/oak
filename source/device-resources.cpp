@@ -1,5 +1,7 @@
 #include "device-resources.hpp"
-	
+
+namespace oak {
+
 DeviceResources DeviceResources::from(const Device &device)
 {
 	DeviceResources result;
@@ -30,3 +32,5 @@ DeviceResources DeviceResources::from(const Device &device)
 
 	return result;
 }
+
+} // namespace oak

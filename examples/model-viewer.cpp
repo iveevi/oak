@@ -89,11 +89,11 @@ Model load_model(const std::filesystem::path &);
 
 // Translating CPU data to Vulkan resources
 struct VulkanMesh {
-	Buffer vertex_buffer;
-	Buffer index_buffer;
+	oak::Buffer vertex_buffer;
+	oak::Buffer index_buffer;
 	size_t index_count;
 
-	Image albedo_image;
+	oak::Image albedo_image;
 	vk::Sampler albedo_sampler;
 	bool has_texture;
 
@@ -101,7 +101,7 @@ struct VulkanMesh {
 
 	vk::DescriptorSet descriptor;
 
-	static VulkanMesh from(const Device &, const DeviceResources &, const Mesh &);
+	static VulkanMesh from(const oak::Device &, const oak::DeviceResources &, const Mesh &);
 };
 
 // Mouse control
@@ -126,9 +126,9 @@ void mouse_callback(GLFWwindow *, int, int, int);
 void cursor_callback(GLFWwindow *, double, double);
 void scroll_callback(GLFWwindow *, double, double);
 
-std::optional <Image> load_texture(const Device &device, const DeviceResources &resources, const std::filesystem::path &path)
+std::optional <oak::Image> load_texture(const oak::Device &device, const oak::DeviceResources &resources, const std::filesystem::path &path)
 {
-	static std::map <std::string, Image> cache;
+	static std::map <std::string, oak::Image> cache;
 
 	if (cache.count(path.string()))
 		return cache.at(path.string());
@@ -142,7 +142,7 @@ std::optional <Image> load_texture(const Device &device, const DeviceResources &
 		return std::nullopt;
 
 	// TODO: builder pattern
-	auto info = ImageInfo {
+	auto info = oak::ImageInfo {
 		.format = vk::Format::eR8G8B8A8Unorm,
 		.size = vk::Extent2D(width, height),
 		.usage = vk::ImageUsageFlagBits::eSampled
@@ -150,11 +150,11 @@ std::optional <Image> load_texture(const Device &device, const DeviceResources &
 		.aspect = vk::ImageAspectFlagBits::eColor,
 	};
 
-	auto result = Image::from(device, info);
+	auto result = oak::Image::from(device, info);
 	cache.emplace(path.string(), result);
 
 	// Transfer image data
-	Texture loaded;
+	oak::Texture loaded;
 	loaded.width = width;
 	loaded.height = height;
 	loaded.data.resize(4 * width * height);
@@ -183,7 +183,7 @@ std::optional <Image> load_texture(const Device &device, const DeviceResources &
 	return result;
 }
 
-VulkanMesh VulkanMesh::from(const Device &device, const DeviceResources &resources, const Mesh &mesh)
+VulkanMesh VulkanMesh::from(const oak::Device &device, const oak::DeviceResources &resources, const Mesh &mesh)
 {
 	// Create the Vulkan mesh
 	VulkanMesh vk_mesh;
@@ -192,8 +192,8 @@ VulkanMesh VulkanMesh::from(const Device &device, const DeviceResources &resourc
 	vk_mesh.has_texture = false;
 
 	// Buffers
-	vk_mesh.vertex_buffer = Buffer::from(device, mesh.vertices, vk::BufferUsageFlagBits::eVertexBuffer);
-	vk_mesh.index_buffer = Buffer::from(device, mesh.indices, vk::BufferUsageFlagBits::eIndexBuffer);
+	vk_mesh.vertex_buffer = oak::Buffer::from(device, mesh.vertices, vk::BufferUsageFlagBits::eVertexBuffer);
+	vk_mesh.index_buffer = oak::Buffer::from(device, mesh.indices, vk::BufferUsageFlagBits::eIndexBuffer);
 
 	// Albedo
 	if (!mesh.albedo_path.empty()) {
@@ -258,12 +258,12 @@ int main(int argc, char *argv[])
 	// Vulkan configuration
 	oak::configure();
 
-	auto device = Device::create(true);
-
-	auto window = Window::from(device, "Spinning Cube", vk::Extent2D(1920, 1080));
+	auto device = oak::Device::create(true);
 
 	// TODO: ResourcesInfo and map[descriptor_type] -> pool size
-	auto resources = DeviceResources::from(device);
+	auto resources = oak::DeviceResources::from(device);
+
+	auto window = oak::Window::from(device, "Model Viewer", vk::Extent2D(1920, 1080));
 
 	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
@@ -314,14 +314,14 @@ int main(int argc, char *argv[])
 	auto render_pass = device.createRenderPass(rp_info);
 
 	// Depth buffer
-	auto db_config = ImageInfo {
+	auto db_config = oak::ImageInfo {
 		.format = vk::Format::eD32Sfloat,
 		.size = window.extent(),
 		.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
 		.aspect = vk::ImageAspectFlagBits::eDepth,
 	};
 
-	auto db = Image::from(device, db_config);
+	auto db = oak::Image::from(device, db_config);
 
 	// Framebuffer configuration
 	std::vector <vk::Framebuffer> framebuffers;
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 	auto textured_fragment = load_module(device, SHADERS "model-viewer-textured.frag.spv");
 
 	// Default pipeline
-	auto default_config = RasterPipelineInfo <Vertex, MVP> ()
+	auto default_config = oak::RasterPipelineInfo <Vertex, MVP> ()
 		.with_vertex(vertex)
 		.with_fragment(default_fragment)
 		.with_attachments(false)
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
 			.setDescriptorCount(1),
 	};
 
-	auto textured_config = RasterPipelineInfo <Vertex, MVP> ()
+	auto textured_config = oak::RasterPipelineInfo <Vertex, MVP> ()
 		.with_vertex(vertex)
 		.with_fragment(textured_fragment)
 		.with_bindings(bindings)
@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
 		}
 	};
 
-	primary_render_loop(device, resources, window, render, resize);
+	oak::primary_render_loop(device, resources, window, render, resize);
 
 	device.waitIdle();
 	window.destroy(device);

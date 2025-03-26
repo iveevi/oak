@@ -6,6 +6,8 @@
 #include "device-resources.hpp"
 #include "window.hpp"
 
+namespace oak {
+
 // Render loop high level function
 using render_callback = std::function <void (const vk::CommandBuffer &, uint32_t)>;
 using resize_callback = std::function <void ()>;
@@ -28,3 +30,5 @@ void transition(const vk::CommandBuffer &,
 		const vk::AccessFlags &,
 		const vk::PipelineStageFlags &,
 		const vk::PipelineStageFlags &);
+
+} // namespace oak

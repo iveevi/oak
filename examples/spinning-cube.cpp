@@ -63,10 +63,9 @@ int main()
 {
 	oak::configure();
 
-	auto device = Device::create(true);
-
-	auto window = Window::from(device, "Spinning Cube", vk::Extent2D(1920, 1080));
-	auto resources = DeviceResources::from(device);
+	auto device = oak::Device::create(true);
+	auto resources = oak::DeviceResources::from(device);
+	auto window = oak::Window::from(device, "Spinning Cube", vk::Extent2D(1920, 1080));
 
 	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
@@ -117,14 +116,14 @@ int main()
 	auto render_pass = device.createRenderPass(rp_info);
 
 	// Depth buffer
-	auto db_config = ImageInfo {
+	auto db_config = oak::ImageInfo {
 	        .format = vk::Format::eD32Sfloat,
 		.size = window.extent(),
 		.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
 		.aspect = vk::ImageAspectFlagBits::eDepth,
 	};
 
-	auto db = Image::from(device, db_config);
+	auto db = oak::Image::from(device, db_config);
 
 	// Framebuffer configuration
 	std::vector <vk::Framebuffer> framebuffers;
@@ -178,7 +177,7 @@ int main()
 	       glm::mat4 proj;
 	};
 
-	auto config = RasterPipelineInfo <Vertex, MVP> ()
+	auto config = oak::RasterPipelineInfo <Vertex, MVP> ()
 		.with_vertex(vertex)
 		.with_fragment(fragment)
 		.with_attachments(true)
@@ -188,8 +187,8 @@ int main()
 	auto pipeline = compile_pipeline(device, render_pass, config);
 
 	// Cube mesh buffers
-	auto vb = Buffer::from(device, vertices, vk::BufferUsageFlagBits::eVertexBuffer);
-	auto ib = Buffer::from(device, triangles, vk::BufferUsageFlagBits::eIndexBuffer);
+	auto vb = oak::Buffer::from(device, vertices, vk::BufferUsageFlagBits::eVertexBuffer);
+	auto ib = oak::Buffer::from(device, triangles, vk::BufferUsageFlagBits::eIndexBuffer);
 
 	vb.name(device, "Vertex Buffer");
 	ib.name(device, "Index Buffer");
@@ -275,7 +274,7 @@ int main()
 		}
 	};
 
-	primary_render_loop(device, resources, window, render, resize);
+	oak::primary_render_loop(device, resources, window, render, resize);
 
 	device.waitIdle();
 	window.destroy(device);

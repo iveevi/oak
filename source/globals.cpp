@@ -25,6 +25,8 @@ VKAPI_ATTR VKAPI_CALL VkBool32 vulkan_validation_logger(vk::DebugUtilsMessageSev
 	return VK_FALSE;
 }
 
+namespace oak {
+
 // Singleton instance
 VulkanGlobals vk_globals;
 
@@ -104,8 +106,6 @@ VulkanGlobals VulkanGlobals::from(bool enable_validation)
 
 	return result;
 }
-
-namespace oak {
 
 void configure()
 {

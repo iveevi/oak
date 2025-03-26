@@ -7,6 +7,8 @@
 
 #include "spirv.hpp"
 
+namespace oak {
+
 SPIRV load_spirv(const std::filesystem::path &path)
 {
 	std::ifstream fin(path, std::ios::binary);
@@ -14,7 +16,7 @@ SPIRV load_spirv(const std::filesystem::path &path)
 		howl_error("failed to read file \"{}\"", path.c_str());
 		return SPIRV();
 	}
-	
+
 	fin.seekg(0, std::ios::end);
 
 	std::streamsize size = fin.tellg();
@@ -50,3 +52,5 @@ std::optional <vk::ShaderModule> load_module(const Device &device, const std::fi
 	auto info = vk::ShaderModuleCreateInfo().setCode(spv);
 	return device.createShaderModule(info);
 }
+
+} // namespace oak

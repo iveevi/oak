@@ -4,6 +4,8 @@
 
 #include "device.hpp"
 
+namespace oak {
+
 struct PrimarySynchronization {
 	std::vector <vk::Fence> processing;
 	std::vector <vk::Semaphore> available;
@@ -24,3 +26,5 @@ struct PrimarySynchronization {
 		return result;
 	}
 };
+
+} // namespace oak

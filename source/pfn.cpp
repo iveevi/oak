@@ -8,7 +8,7 @@
 	using PFN = PFN_##name;								\
 	static PFN handle = 0;								\
 	if (!handle) {									\
-		handle = (PFN) vkGetInstanceProcAddr(vk_globals.instance, #name);	\
+		handle = (PFN) vkGetInstanceProcAddr(oak::vk_globals.instance, #name);	\
 		howl_assert(handle, "invalid PFN: " #name);				\
 	}										\
 	return handle(__VA_ARGS__)

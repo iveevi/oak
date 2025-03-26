@@ -2,6 +2,8 @@
 #include "sbt.hpp"
 #include "spirv.hpp"
 
+namespace oak {
+
 template <class I>
 constexpr I align_up(I x, size_t a)
 {
@@ -16,12 +18,12 @@ std::tuple <vk::Pipeline, ShaderBindingTable> compile_pipeline(const Device &dev
 
 	// Ray generation
 	modules.emplace_back(load_module(device, rtx.ray_generation).value());
-		
+
 	auto ray_generation_stage = vk::PipelineShaderStageCreateInfo()
 		.setStage(vk::ShaderStageFlagBits::eRaygenKHR)
 		.setModule(modules.back())
 		.setPName("main");
-	
+
 	auto ray_generation_group = vk::RayTracingShaderGroupCreateInfoKHR()
 		.setType(vk::RayTracingShaderGroupTypeKHR::eGeneral)
 		.setGeneralShader(0);
@@ -32,12 +34,12 @@ std::tuple <vk::Pipeline, ShaderBindingTable> compile_pipeline(const Device &dev
 	// Ray miss
 	for (auto &m : rtx.misses) {
 		modules.emplace_back(load_module(device, m).value());
-		
+
 		auto stage = vk::PipelineShaderStageCreateInfo()
 			.setStage(vk::ShaderStageFlagBits::eMissKHR)
 			.setModule(modules.back())
 			.setPName("main");
-		
+
 		auto group = vk::RayTracingShaderGroupCreateInfoKHR()
 			.setType(vk::RayTracingShaderGroupTypeKHR::eGeneral)
 			.setGeneralShader(stages.size());
@@ -45,16 +47,16 @@ std::tuple <vk::Pipeline, ShaderBindingTable> compile_pipeline(const Device &dev
 		stages.emplace_back(stage);
 		groups.emplace_back(group);
 	}
-	
+
 	// Ray closest hit
 	for (auto &m : rtx.closest_hits) {
 		modules.emplace_back(load_module(device, m).value());
-		
+
 		auto stage = vk::PipelineShaderStageCreateInfo()
 			.setStage(vk::ShaderStageFlagBits::eClosestHitKHR)
 			.setModule(modules.back())
 			.setPName("main");
-		
+
 		auto group = vk::RayTracingShaderGroupCreateInfoKHR()
 			.setType(vk::RayTracingShaderGroupTypeKHR::eTrianglesHitGroup)
 			.setClosestHitShader(stages.size());
@@ -88,11 +90,11 @@ std::tuple <vk::Pipeline, ShaderBindingTable> compile_pipeline(const Device &dev
 	sbt.misses = vk::StridedDeviceAddressRegionKHR()
 		.setSize(align_up(rtx.misses.size() * handle_size_aligned, base_alignment))
 		.setStride(handle_size_aligned);
-	
+
 	sbt.closest_hits = vk::StridedDeviceAddressRegionKHR()
 		.setSize(align_up(rtx.closest_hits.size() * handle_size_aligned, base_alignment))
 		.setStride(handle_size_aligned);
-	
+
 	sbt.callables = vk::StridedDeviceAddressRegionKHR();
 
 	std::vector <uint8_t> handles(handle_size * groups.size());
@@ -146,3 +148,5 @@ std::tuple <vk::Pipeline, ShaderBindingTable> compile_pipeline(const Device &dev
 	// Final result
 	return std::make_tuple(pipeline, sbt);
 }
+
+} // namespace oak

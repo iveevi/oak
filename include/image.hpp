@@ -6,6 +6,8 @@
 
 #include "device.hpp"
 
+namespace oak {
+
 struct Buffer;
 
 struct Texture {
@@ -53,3 +55,5 @@ struct Image {
 	static Image from(const Device &, const ImageInfo &);
 	static Image from(const Device &, const DepthImageInfo &);
 };
+
+} // namespace oak

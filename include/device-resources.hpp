@@ -2,6 +2,8 @@
 
 #include "device.hpp"
 
+namespace oak {
+
 struct DeviceResources {
 	Queue queue;
 	vk::CommandPool command_pool;
@@ -9,3 +11,5 @@ struct DeviceResources {
 
 	static DeviceResources from(const Device &);
 };
+
+} // namespace oak

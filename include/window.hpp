@@ -4,6 +4,8 @@
 
 #include <GLFW/glfw3.h>
 
+namespace oak {
+
 struct Window {
 	int width = 0;
 	int height = 0;
@@ -26,3 +28,5 @@ struct Window {
 	static Window from(const Device &device, const std::string &, int, int);
 	static Window from(const Device &device, const std::string &, const vk::Extent2D &);
 };
+
+} // namespace oak

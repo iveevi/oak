@@ -3,6 +3,8 @@
 #include "util.hpp"
 #include "sync.hpp"
 
+namespace oak {
+
 void primary_render_loop(const Device &device,
 			 const DeviceResources &resources,
 			 Window &window,
@@ -16,18 +18,18 @@ void primary_render_loop(const Device &device,
 		.setLevel(vk::CommandBufferLevel::ePrimary);
 
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
-	
+
 	auto sync = PrimarySynchronization::from(device, window.images.size());
-	
+
 	uint32_t frame = 0;
-		
+
 	SwapchainStatus status;
 	uint32_t image_index;
 	bool skip_reset = false;
 
 	while (!glfwWindowShouldClose(window.glfw)) {
 		glfwPollEvents();
-		
+
 		// In case acquire failed in the previous frame
 		if (skip_reset)
 			skip_reset = false;
@@ -60,7 +62,7 @@ void primary_render_loop(const Device &device,
 			render(cmd, image_index);
 		}
 		cmd.end();
-		
+
 		// Submit and present
 		resources.queue.submit({ cmd },
 			{ sync.available[frame] },
@@ -69,7 +71,7 @@ void primary_render_loop(const Device &device,
 			vk::PipelineStageFlagBits::eColorAttachmentOutput);
 
 		status = resources.queue.present(window.swapchain, { sync.finished[frame] }, image_index);
-		
+
 		// Potential resize after failed presentation
 		if (status == eOutOfDate) {
 			howl_warning("need to resize swapchain (failed present)");
@@ -123,3 +125,5 @@ void transition(const vk::CommandBuffer &cmd,
 	cmd.pipelineBarrier(source_stage, destination_stage,
 		{ }, { }, { }, image_barrier);
 }
+
+} // namespace oak

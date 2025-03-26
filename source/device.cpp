@@ -5,6 +5,8 @@
 #include "device.hpp"
 #include "globals.hpp"
 
+namespace oak {
+
 uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &properties,
 			  uint32_t filter,
 			  vk::MemoryPropertyFlags flags)
@@ -27,60 +29,12 @@ uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &properties,
 	return type_index;
 }
 
-// Queue methods
-Queue::Queue(const vk::Queue &queue) : vk::Queue(queue) {}
-	
-void Queue::submit(const std::vector <vk::CommandBuffer> &commands,
-		   const std::vector <vk::Semaphore> &wait,
-		   const std::vector <vk::Semaphore> &signal,
-		   const vk::Fence &fence,
-		   const vk::PipelineStageFlags &flags) const
-{
-	auto submit_info = vk::SubmitInfo()
-		.setWaitDstStageMask(flags)
-		.setCommandBuffers(commands)
-		.setWaitSemaphores(wait)
-		.setWaitSemaphoreCount(wait.size())
-		.setSignalSemaphores(signal)
-		.setSignalSemaphoreCount(signal.size());
-
-	vk::Queue::submit(submit_info, fence);
-}
-
-void Queue::submitAndWait(const std::vector <vk::CommandBuffer> &commands) const
-{
-	submit(commands, { }, { }, nullptr, vk::PipelineStageFlagBits::eNone);
-	waitIdle();
-}
-
-SwapchainStatus Queue::present(const vk::SwapchainKHR &swapchain, const std::vector <vk::Semaphore> &wait, uint32_t index) const
-{
-	auto present_info = vk::PresentInfoKHR()
-		.setSwapchains(swapchain)
-		.setImageIndices(index)
-		.setWaitSemaphores(wait)
-		.setWaitSemaphoreCount(wait.size());
-
-	vk::Result present_result;
-
-	try {
-		present_result = presentKHR(present_info);
-	} catch (const vk::OutOfDateKHRError &) {
-		return eOutOfDate;
-	}
-
-	if (present_result != vk::Result::eSuccess)
-		return eFaulty;
-
-	return eReady;
-}
-
 // Device methods
 Device::Device(const vk::PhysicalDevice &phdev, const vk::Device &lgdev)
 		: vk::PhysicalDevice(phdev), vk::Device(lgdev)
 {
 	memory_properties = getMemoryProperties();
-	
+
 	// Load necessary properties
 	auto phdev_properties = vk::PhysicalDeviceProperties2KHR();
 	phdev_properties.pNext = &properties.rtx_pipeline;
@@ -111,7 +65,7 @@ void Device::waitAndReset(const vk::Fence &fence) const
 	assert(wait_result == vk::Result::eSuccess);
 	resetFences(fence);
 }
-	
+
 vk::DeviceAddress Device::getAddress(const vk::Buffer &buffer) const
 {
 	auto info = vk::BufferDeviceAddressInfo()
@@ -151,9 +105,9 @@ void Device::setName(const vk::DeviceMemory &handle, const std::string &s) const
 std::pair <SwapchainStatus, uint32_t> Device::acquireNextImage(const vk::SwapchainKHR &swapchain, const vk::Semaphore &semaphore) const
 {
 	auto timeout = UINT64_MAX;
-	
+
 	vk::ResultValue <uint32_t> acquire_result(vk::Result::eSuccess, 0);
-	
+
 	try {
 		acquire_result = acquireNextImageKHR(swapchain, timeout, semaphore, nullptr);
 	} catch (const vk::OutOfDateKHRError &) {
@@ -245,7 +199,7 @@ Device Device::create(bool renderdoc)
 	fmt::println("\tbase size: {}", pr_raytracing.shaderGroupBaseAlignment);
 	fmt::println("\thandle size: {}", pr_raytracing.shaderGroupHandleSize);
 	fmt::println("\thandle alignment: {}", pr_raytracing.shaderGroupHandleAlignment);
-	
+
 	// Extensions for the devices
 	std::vector <const char *> device_extension_names {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -261,7 +215,7 @@ Device Device::create(bool renderdoc)
 		features.add <vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT> ();
 		features.add <vk::PhysicalDeviceRayTracingPipelineFeaturesKHR> ();
 		features.add <vk::PhysicalDeviceAccelerationStructureFeaturesKHR> ();
-	
+
 		device_extension_names.insert(device_extension_names.end(),
 			{
 				VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
@@ -319,4 +273,6 @@ Device Device::create(bool renderdoc)
 		result.icx_features.raytracing = true;
 
 	return result;
+}
+
 }

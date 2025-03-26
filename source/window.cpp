@@ -5,6 +5,8 @@
 #include "window.hpp"
 #include "globals.hpp"
 
+namespace oak {
+
 void Window::resize(const Device &device)
 {
 	// Check for the new window size
@@ -149,3 +151,5 @@ Window Window::from(const Device &device, const std::string &title, const vk::Ex
 {
 	return Window::from(device, title, resolution.width, resolution.height);
 }
+
+} // namespace oak

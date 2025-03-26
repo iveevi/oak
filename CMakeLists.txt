@@ -23,7 +23,7 @@ add_library(oak STATIC
 	source/image.cpp
 	source/globals.cpp
 	source/pfn.cpp
-	source/render-pass.cpp
+	source/queue.cpp
 	source/sbt.cpp
 	source/spirv.cpp
 	source/util.cpp
@@ -31,19 +31,21 @@ add_library(oak STATIC
 
 target_link_libraries(oak PRIVATE howler glfw Vulkan::Vulkan)
 
-add_executable(hello-triangle
-	examples/hello-triangle.cpp)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+	add_executable(hello-triangle
+		examples/hello-triangle.cpp)
 
-add_executable(spinning-cube
-	examples/spinning-cube.cpp)
+	add_executable(spinning-cube
+		examples/spinning-cube.cpp)
 
-add_executable(mesh-viewer
-	examples/mesh-viewer.cpp)
+	add_executable(mesh-viewer
+		examples/mesh-viewer.cpp)
 
-add_executable(model-viewer
-	examples/model-viewer.cpp)
+	add_executable(model-viewer
+		examples/model-viewer.cpp)
 
-target_link_libraries(hello-triangle PRIVATE oak)
-target_link_libraries(spinning-cube  PRIVATE oak)
-target_link_libraries(mesh-viewer    PRIVATE oak assimp)
-target_link_libraries(model-viewer   PRIVATE oak assimp)
+	target_link_libraries(hello-triangle PRIVATE oak)
+	target_link_libraries(spinning-cube  PRIVATE oak)
+	target_link_libraries(mesh-viewer    PRIVATE oak assimp)
+	target_link_libraries(model-viewer   PRIVATE oak assimp)
+endif()

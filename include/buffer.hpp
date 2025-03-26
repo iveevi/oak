@@ -4,6 +4,8 @@
 
 #include "device.hpp"
 
+namespace oak {
+
 struct Buffer {
 	// TODO: wrapper around memory with origin
 	vk::Buffer handle = nullptr;
@@ -29,21 +31,21 @@ struct Buffer {
 		std::memcpy(mapped + offset, data.data(), data.size() * sizeof(T));
 		device.unmapMemory(memory);
 	}
-	
+
 	template <typename T>
 	void upload(const Device &device, const T &data, size_t offset = 0) const {
 		int8_t *mapped = (int8_t *) device.mapMemory(memory, 0, size);
 		std::memcpy(mapped + offset, &data, sizeof(T));
 		device.unmapMemory(memory);
 	}
-	
+
 	template <typename T>
 	void upload(const Device &device, const T *data, size_t size, size_t offset = 0) const {
 		int8_t *mapped = (int8_t *) device.mapMemory(memory, 0, size);
 		std::memcpy(mapped + offset, data, size);
 		device.unmapMemory(memory);
 	}
-	
+
 	template <typename T>
 	void download(const Device &device, std::vector <T> &data) const {
 		// TODO: size check...
@@ -66,9 +68,9 @@ struct Buffer {
 		auto buffer_info = vk::BufferCreateInfo()
 			.setSize(buffer.size)
 			.setUsage(usage);
-		
+
 		buffer.handle = device.createBuffer(buffer_info);
-		
+
 		auto memory_requirements = device.getBufferMemoryRequirements(buffer.handle);
 
 		buffer.memory = device.allocateMemoryRequirements(memory_requirements,
@@ -83,7 +85,7 @@ struct Buffer {
 
 		return buffer;
 	}
-	
+
 	template <typename T>
 	static Buffer from(const Device &device, const T &data, const vk::BufferUsageFlags &usage) {
 		Buffer buffer;
@@ -93,9 +95,9 @@ struct Buffer {
 		auto buffer_info = vk::BufferCreateInfo()
 			.setSize(buffer.size)
 			.setUsage(usage);
-		
+
 		buffer.handle = device.createBuffer(buffer_info);
-		
+
 		auto memory_requirements = device.getBufferMemoryRequirements(buffer.handle);
 
 		buffer.memory = device.allocateMemoryRequirements(memory_requirements,
@@ -119,9 +121,9 @@ struct Buffer {
 		auto buffer_info = vk::BufferCreateInfo()
 			.setSize(buffer.size)
 			.setUsage(usage);
-		
+
 		buffer.handle = device.createBuffer(buffer_info);
-		
+
 		auto memory_requirements = device.getBufferMemoryRequirements(buffer.handle);
 
 		buffer.memory = device.allocateMemoryRequirements(memory_requirements,
@@ -133,3 +135,5 @@ struct Buffer {
 		return buffer;
 	}
 };
+
+} // namespace oak

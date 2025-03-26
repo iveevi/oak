@@ -8,6 +8,8 @@
 #include "device.hpp"
 #include "spirv.hpp"
 
+namespace oak {
+
 template <typename V>
 concept vertex_type = std::same_as <V, void> || requires() {
 	{ V::binding() } -> std::same_as <vk::VertexInputBindingDescription>;
@@ -250,3 +252,5 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 
 	return result;
 }
+
+} // namespace oak

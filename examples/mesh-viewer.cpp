@@ -86,10 +86,9 @@ int main(int argc, char *argv[])
 	// Vulkan configuration
 	oak::configure();
 
-	auto device = Device::create(true);
-
-	auto window = Window::from(device, "Spinning Cube", vk::Extent2D(1920, 1080));
-	auto resources = DeviceResources::from(device);
+	auto device = oak::Device::create(true);
+	auto resources = oak::DeviceResources::from(device);
+	auto window = oak::Window::from(device, "Mesh Viewer", vk::Extent2D(1920, 1080));
 
 	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
@@ -140,14 +139,14 @@ int main(int argc, char *argv[])
 	auto render_pass = device.createRenderPass(rp_info);
 
 	// Depth buffer
-	auto db_config = ImageInfo {
+	auto db_config = oak::ImageInfo {
 		.format = vk::Format::eD32Sfloat,
 		.size = window.extent(),
 		.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
 		.aspect = vk::ImageAspectFlagBits::eDepth,
 	};
 
-	auto db = Image::from(device, db_config);
+	auto db = oak::Image::from(device, db_config);
 
 	// Framebuffer configuration
 	std::vector <vk::Framebuffer> framebuffers;
@@ -181,7 +180,7 @@ int main(int argc, char *argv[])
 		alignas(16) glm::vec3 light_direction;
 	};
 
-	auto config = RasterPipelineInfo <Vertex, MVP> ()
+	auto config = oak::RasterPipelineInfo <Vertex, MVP> ()
 		.with_vertex(vertex)
 		.with_fragment(fragment)
 		.with_attachments(false)
@@ -191,8 +190,8 @@ int main(int argc, char *argv[])
 	auto pipeline = compile_pipeline(device, render_pass, config);
 
 	// Allocate mesh buffers
-	auto vb = Buffer::from(device, mesh.vertices, vk::BufferUsageFlagBits::eVertexBuffer);
-	auto ib = Buffer::from(device, mesh.indices, vk::BufferUsageFlagBits::eIndexBuffer);
+	auto vb = oak::Buffer::from(device, mesh.vertices, vk::BufferUsageFlagBits::eVertexBuffer);
+	auto ib = oak::Buffer::from(device, mesh.indices, vk::BufferUsageFlagBits::eIndexBuffer);
 
 	// Prepare camera and model matrices
 	glm::mat4 model = glm::mat4 { 1.0f };
@@ -331,7 +330,7 @@ int main(int argc, char *argv[])
 		}
 	};
 
-	primary_render_loop(device, resources, window, render, resize);
+	oak::primary_render_loop(device, resources, window, render, resize);
 
 	device.waitIdle();
 	window.destroy(device);
