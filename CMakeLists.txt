@@ -40,6 +40,10 @@ add_executable(spinning-cube
 add_executable(mesh-viewer
 	examples/mesh-viewer.cpp)
 
+add_executable(model-viewer
+	examples/model-viewer.cpp)
+
 target_link_libraries(hello-triangle PRIVATE oak)
 target_link_libraries(spinning-cube  PRIVATE oak)
 target_link_libraries(mesh-viewer    PRIVATE oak assimp)
+target_link_libraries(model-viewer   PRIVATE oak assimp)

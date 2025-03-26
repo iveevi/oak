@@ -29,7 +29,7 @@ struct Vertex {
 		return vk::VertexInputBindingDescription()
 			.setBinding(0)
 			.setInputRate(vk::VertexInputRate::eVertex)
-			.setStride(6 * sizeof(float));
+			.setStride(sizeof(Vertex));
 	}
 
 	static std::vector <vk::VertexInputAttributeDescription> attributes() {
@@ -38,12 +38,12 @@ struct Vertex {
 				.setBinding(0)
 				.setFormat(vk::Format::eR32G32B32Sfloat)
 				.setLocation(0)
-				.setOffset(0),
+				.setOffset(offsetof(Vertex, position)),
 			vk::VertexInputAttributeDescription()
 				.setBinding(0)
 				.setFormat(vk::Format::eR32G32B32Sfloat)
 				.setLocation(1)
-				.setOffset(3 * sizeof(float)),
+				.setOffset(offsetof(Vertex, normal)),
 		};
 	}
 };
