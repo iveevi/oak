@@ -1,0 +1,279 @@
+#include "image.hpp"
+#include <oak.hpp>
+
+// GLM for vector math
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <vulkan/vulkan_enums.hpp>
+#include <vulkan/vulkan_handles.hpp>
+#include <vulkan/vulkan_structs.hpp>
+
+// Unit cube data
+static const std::vector <std::array <float, 6>> vertices {
+        // Front
+        { { -1.0f, -1.0f, -1.0f,  1.0f, 0.0f, 0.0f } },
+        { {  1.0f, -1.0f, -1.0f,  1.0f, 0.0f, 0.0f } },
+        { {  1.0f,  1.0f, -1.0f,  1.0f, 0.0f, 0.0f } },
+        { { -1.0f,  1.0f, -1.0f,  1.0f, 0.0f, 0.0f } },
+
+        // Back
+        { { -1.0f, -1.0f,  1.0f,  0.0f, 1.0f, 0.0f } },
+        { {  1.0f, -1.0f,  1.0f,  0.0f, 1.0f, 0.0f } },
+        { {  1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f } },
+        { { -1.0f,  1.0f,  1.0f,  0.0f, 1.0f, 0.0f } },
+
+        // Left
+        { { -1.0f, -1.0f, -1.0f,  0.0f, 0.0f, 1.0f } },
+        { { -1.0f, -1.0f,  1.0f,  0.0f, 0.0f, 1.0f } },
+        { { -1.0f,  1.0f,  1.0f,  0.0f, 0.0f, 1.0f } },
+        { { -1.0f,  1.0f, -1.0f,  0.0f, 0.0f, 1.0f } },
+
+        // Right
+        { {  1.0f, -1.0f, -1.0f,  1.0f, 1.0f, 0.0f } },
+        { {  1.0f, -1.0f,  1.0f,  1.0f, 1.0f, 0.0f } },
+        { {  1.0f,  1.0f,  1.0f,  1.0f, 1.0f, 0.0f } },
+        { {  1.0f,  1.0f, -1.0f,  1.0f, 1.0f, 0.0f } },
+
+        // Top
+        { { -1.0f, -1.0f, -1.0f,  0.0f, 1.0f, 1.0f } },
+        { { -1.0f, -1.0f,  1.0f,  0.0f, 1.0f, 1.0f } },
+        { {  1.0f, -1.0f,  1.0f,  0.0f, 1.0f, 1.0f } },
+        { {  1.0f, -1.0f, -1.0f,  0.0f, 1.0f, 1.0f } },
+
+        // Bottom
+        { { -1.0f,  1.0f, -1.0f,  1.0f, 0.0f, 1.0f } },
+        { { -1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 1.0f } },
+        { {  1.0f,  1.0f,  1.0f,  1.0f, 0.0f, 1.0f } },
+        { {  1.0f,  1.0f, -1.0f,  1.0f, 0.0f, 1.0f } }
+};
+
+static const std::vector <uint32_t> triangles {
+        0, 1, 2,        2, 3, 0,        // Front
+        4, 6, 5,        6, 4, 7,        // Back
+        8, 10, 9,       10, 8, 11,      // Left
+        12, 13, 14,     14, 15, 12,     // Right
+        16, 17, 18,     18, 19, 16,     // Top
+        20, 22, 21,     22, 20, 23      // Bottom
+};
+
+int main()
+{
+	oak::configure();
+
+	auto device = Device::create(true);
+
+	auto window = Window::from(device, "Spinning Cube", vk::Extent2D(1920, 1080));
+	auto resources = DeviceResources::from(device);
+
+	auto command_buffer_info = vk::CommandBufferAllocateInfo()
+		.setCommandPool(resources.command_pool)
+		.setCommandBufferCount(window.images.size())
+		.setLevel(vk::CommandBufferLevel::ePrimary);
+
+	auto commands = device.allocateCommandBuffers(command_buffer_info);
+
+	// Render pass configuration
+	std::array <vk::AttachmentDescription, 2> attachments;
+
+	// Color
+	attachments[0] = vk::AttachmentDescription()
+		.setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
+		.setInitialLayout(vk::ImageLayout::eUndefined)
+		.setFormat(window.format)
+		.setSamples(vk::SampleCountFlagBits::e1)
+		.setLoadOp(vk::AttachmentLoadOp::eClear)
+		.setStoreOp(vk::AttachmentStoreOp::eStore);
+
+	attachments[1] = vk::AttachmentDescription()
+		.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+		.setInitialLayout(vk::ImageLayout::eUndefined)
+		.setFormat(vk::Format::eD32Sfloat)
+		.setSamples(vk::SampleCountFlagBits::e1)
+		.setLoadOp(vk::AttachmentLoadOp::eClear)
+		.setStoreOp(vk::AttachmentStoreOp::eStore);
+
+	std::array <vk::AttachmentReference, 1> color;
+	std::array <vk::AttachmentReference, 1> depth;
+
+	color[0] = vk::AttachmentReference()
+		.setAttachment(0)
+		.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+	depth[0] = vk::AttachmentReference()
+		.setAttachment(1)
+		.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+	auto sp_info = vk::SubpassDescription()
+		.setColorAttachments(color)
+		.setPDepthStencilAttachment(depth.data());
+
+	auto rp_info = vk::RenderPassCreateInfo()
+		.setAttachments(attachments)
+		.setSubpasses(sp_info);
+
+	auto render_pass = device.createRenderPass(rp_info);
+
+	// Depth buffer
+	auto db_config = ImageInfo {
+	        .format = vk::Format::eD32Sfloat,
+		.size = window.extent(),
+		.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
+		.aspect = vk::ImageAspectFlagBits::eDepth,
+	};
+
+	auto db = Image::from(device, db_config);
+
+	// Framebuffer configuration
+	std::vector <vk::Framebuffer> framebuffers;
+
+	for (auto &view : window.views) {
+                std::array <vk::ImageView, 2> views;
+                views[0] = view;
+                views[1] = db.view;
+
+        	auto fb_info = vk::FramebufferCreateInfo()
+                       	.setAttachments(views)
+                       	.setWidth(window.width)
+                       	.setHeight(window.height)
+                       	.setLayers(1)
+                       	.setRenderPass(render_pass);
+
+        	framebuffers.emplace_back(device.createFramebuffer(fb_info));
+	}
+
+	// Shader programs
+	auto vertex = load_module(device, "examples/shaders/bin/spinning_cube.vert.spv");
+	auto fragment = load_module(device, "examples/shaders/bin/spinning_cube.frag.spv");
+
+	struct Vertex {
+		static vk::VertexInputBindingDescription binding() {
+			return vk::VertexInputBindingDescription()
+				.setBinding(0)
+				.setInputRate(vk::VertexInputRate::eVertex)
+				.setStride(6 * sizeof(float));
+		}
+
+		static std::vector <vk::VertexInputAttributeDescription> attributes() {
+			return {
+				vk::VertexInputAttributeDescription()
+					.setBinding(0)
+					.setFormat(vk::Format::eR32G32B32Sfloat)
+					.setLocation(0)
+					.setOffset(0),
+				vk::VertexInputAttributeDescription()
+					.setBinding(0)
+					.setFormat(vk::Format::eR32G32B32Sfloat)
+					.setLocation(1)
+					.setOffset(3 * sizeof(float)),
+			};
+		}
+	};
+
+	struct MVP {
+	       glm::mat4 model;
+	       glm::mat4 view;
+	       glm::mat4 proj;
+	};
+
+	auto config = RasterPipelineInfo <Vertex, MVP> ()
+		.with_vertex(vertex)
+		.with_fragment(fragment)
+		.with_attachments(true)
+		.with_depth_test(true)
+		.with_depth_write(true);
+
+	auto pipeline = compile_pipeline(device, render_pass, config);
+
+	// Cube mesh buffers
+	auto vb = Buffer::from(device, vertices, vk::BufferUsageFlagBits::eVertexBuffer);
+	auto ib = Buffer::from(device, triangles, vk::BufferUsageFlagBits::eIndexBuffer);
+
+	vb.name(device, "Vertex Buffer");
+	ib.name(device, "Index Buffer");
+
+	// View data
+	glm::mat4 view = glm::lookAt(
+                glm::vec3 { 0.0f, 0.0f, 5.0f },
+                glm::vec3 { 0.0f, 0.0f, 0.0f },
+                glm::vec3 { 0.0f, 1.0f, 0.0f }
+        );
+
+        auto render = [&](const vk::CommandBuffer &cmd, uint32_t image_index) {
+               	auto &framebuffer = framebuffers[image_index];
+
+               	if (glfwGetKey(window.glfw, GLFW_KEY_Q) == GLFW_PRESS) {
+                        glfwSetWindowShouldClose(window.glfw, true);
+                        return;
+               	}
+
+        	auto scissor = vk::Rect2D()
+        		.setExtent(window.extent())
+        		.setOffset(vk::Offset2D(0, 0));
+
+        	auto viewport = vk::Viewport()
+        		.setWidth(window.width)
+        		.setHeight(window.height)
+        		.setMaxDepth(1.0)
+        		.setMinDepth(0.0)
+        		.setX(0)
+        		.setY(0);
+
+        	cmd.setViewport(0, viewport);
+        	cmd.setScissor(0, scissor);
+
+        	std::array <vk::ClearValue, 2> clear_values;
+        	clear_values[0] = vk::ClearColorValue(1.0f, 1.0f, 1.0f, 1.0f);
+                clear_values[1] = vk::ClearValue(1.0f);
+
+        	auto render_area = vk::Rect2D()
+        		.setExtent(window.extent())
+        		.setOffset(vk::Offset2D(0, 0));
+
+        	auto rp_begin_info = vk::RenderPassBeginInfo()
+        		.setRenderPass(render_pass)
+        		.setRenderArea(render_area)
+        		.setClearValues(clear_values)
+        		.setFramebuffer(framebuffer);
+
+        	cmd.beginRenderPass(rp_begin_info, vk::SubpassContents::eInline);
+
+                glm::mat4 model = glm::mat4 { 1.0f };
+                glm::mat4 proj = glm::perspective(glm::radians(45.0f), window.aspect(), 0.1f, 10.0f);
+
+                // Rotate the model matrix
+                model = glm::rotate(model,
+                        (float) glfwGetTime() * glm::radians(90.0f),
+                        glm::vec3 { 0.0f, 1.0f, 0.0f }
+                );
+
+                MVP push_constants { model, view, proj };
+
+                cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.handle);
+                cmd.pushConstants <MVP> (pipeline.layout, vk::ShaderStageFlagBits::eVertex, 0, push_constants);
+                cmd.bindVertexBuffers(0, vb.handle, { 0 });
+                cmd.bindIndexBuffer(ib.handle, 0, vk::IndexType::eUint32);
+                cmd.drawIndexed(triangles.size(), 1, 0, 0, 0);
+
+        	cmd.endRenderPass();
+	};
+
+	auto resize = [&]() {
+		framebuffers.clear();
+
+		for (auto &view : window.views) {
+			auto fb_info = vk::FramebufferCreateInfo()
+				.setAttachments(view)
+				.setWidth(window.width)
+				.setHeight(window.height)
+				.setLayers(1)
+				.setRenderPass(render_pass);
+
+			framebuffers.emplace_back(device.createFramebuffer(fb_info));
+		}
+	};
+
+	primary_render_loop(device, resources, window, render, resize);
+
+	device.waitIdle();
+	window.destroy(device);
+}

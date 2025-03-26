@@ -10,17 +10,17 @@ struct Window {
 	GLFWwindow *glfw = nullptr;
 	vk::SwapchainKHR swapchain = nullptr;
 	vk::SurfaceKHR surface = nullptr;
-	
+
 	std::vector <vk::Image> images;
 	std::vector <vk::ImageView> views;
 	vk::Format format;
-	
+
 	void resize(const Device &);
 
 	void destroy(const Device &);
 
 	size_t pixels() const;
-	
+	float aspect() const;
 	vk::Extent2D extent() const;
 
 	static Window from(const Device &device, const std::string &, int, int);

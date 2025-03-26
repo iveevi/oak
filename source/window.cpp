@@ -24,7 +24,7 @@ void Window::resize(const Device &device)
 
 	howl_info("(re)sizing window to {}x{}", width, height);
 
-	// Rebuild swapchain	
+	// Rebuild swapchain
 	auto capabilities = device.getSurfaceCapabilitiesKHR(surface);
 	auto surface_formats = device.getSurfaceFormatsKHR(surface);
 
@@ -32,7 +32,7 @@ void Window::resize(const Device &device)
 	for (auto &sfmt : surface_formats) {
 		try {
 			auto _ = device.getImageFormatProperties(sfmt.format,
-				vk::ImageType::e2D, 
+				vk::ImageType::e2D,
 				vk::ImageTiling::eOptimal,
 				vk::ImageUsageFlagBits::eStorage);
 
@@ -98,6 +98,11 @@ void Window::destroy(const Device &device)
 size_t Window::pixels() const
 {
 	return width * height;
+}
+
+float Window::aspect() const
+{
+        return float(width) / float(height);
 }
 
 vk::Extent2D Window::extent() const

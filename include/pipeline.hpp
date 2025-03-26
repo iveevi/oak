@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include <howler/howler.hpp>
+#include <vulkan/vulkan_enums.hpp>
 
 #include "device.hpp"
 #include "spirv.hpp"
@@ -21,7 +22,7 @@ struct RasterPipeline {
 	vk::Pipeline handle;
 	vk::PipelineLayout layout;
 	std::optional <vk::DescriptorSetLayout> dsl;
-	
+
 	// TODO: bind returns another handle?
 	void bind(const vk::CommandBuffer &cmd) const {
 		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, handle);
@@ -31,7 +32,7 @@ struct RasterPipeline {
 	requires (!std::same_as <Vconst, void>) {
 		cmd.pushConstants <Vconst> (layout, vk::ShaderStageFlagBits::eVertex, 0, vconst);
 	}
-	
+
 	void pushFragmentConstants(const vk::CommandBuffer &cmd, const RFconst &fconst) const
 	requires (!std::same_as <Fconst, void>) {
 		size_t offset = 0;
@@ -43,7 +44,7 @@ struct RasterPipeline {
 };
 
 template <vertex_type Vertex, typename Vconst = void, typename Fconst = void>
-struct RasterPipelineConfiguration {
+struct RasterPipelineInfo {
 	std::vector <vk::DescriptorSetLayoutBinding> bindings;
 	std::optional <vk::ShaderModule> vertex;
 	std::optional <vk::ShaderModule> fragment;
@@ -51,12 +52,51 @@ struct RasterPipelineConfiguration {
 	std::vector <bool> attachments;
 	bool depth_write;
 	bool depth_test;
+
+	RasterPipelineInfo() : fill(vk::PolygonMode::eFill), depth_write(false), depth_test(false) {}
+
+	RasterPipelineInfo &with_bindings(const std::vector <vk::DescriptorSetLayoutBinding> &bindings_) {
+		bindings = bindings_;
+		return *this;
+	}
+
+	RasterPipelineInfo &with_vertex(const std::optional <vk::ShaderModule> &vertex_) {
+		vertex = vertex_;
+		return *this;
+	}
+
+	RasterPipelineInfo &with_fragment(const std::optional <vk::ShaderModule> &fragment_) {
+		fragment = fragment_;
+		return *this;
+	}
+
+	RasterPipelineInfo &with_fill(const vk::PolygonMode &fill_) {
+		fill = fill_;
+		return *this;
+	}
+
+	template <typename ... Ts>
+	requires (std::is_convertible_v <Ts, bool> && ...)
+	RasterPipelineInfo &with_attachments(const Ts &... ts) {
+		attachments = { ts... };
+		return *this;
+	}
+
+	RasterPipelineInfo &with_depth_write(bool depth_write_) {
+		depth_write = depth_write_;
+		return *this;
+	}
+
+	RasterPipelineInfo &with_depth_test(bool depth_test_) {
+		depth_test = depth_test_;
+		return *this;
+	}
 };
 
 template <vertex_type Vertex, typename Vconst = void, typename Fconst = void>
 RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 						 const vk::RenderPass &render_pass,
-					   	 const RasterPipelineConfiguration <Vertex, Vconst, Fconst> &config)
+					   	 const RasterPipelineInfo <Vertex, Vconst, Fconst> &config)
 {
 	RasterPipeline <Vconst, Fconst> result;
 
@@ -86,7 +126,7 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 		ranges.push_back(vconst);
 		offset += sizeof(Vconst);
 	}
-	
+
 	if constexpr (not std::same_as <Fconst, void>) {
 		auto fconst = vk::PushConstantRange()
 			.setOffset(offset)
@@ -110,7 +150,7 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 
 	if (result.dsl)
 		layout_info = layout_info.setSetLayouts(result.dsl.value());
-	
+
 	result.layout = device.createPipelineLayout(layout_info);
 
 	// Rest of the pipeline configuration
@@ -143,13 +183,13 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 		.setRasterizerDiscardEnable(vk::False)
 		.setDepthBiasEnable(vk::False)
 		.setLineWidth(1);
-	
+
 	std::vector <vk::DynamicState> dynamic_states;
 
 	dynamic_states.resize(2);
 	dynamic_states[0] = vk::DynamicState::eViewport;
 	dynamic_states[1] = vk::DynamicState::eScissor;
-		
+
 	auto dynamic_state_info = vk::PipelineDynamicStateCreateInfo()
 		.setDynamicStates(dynamic_states);
 
@@ -169,7 +209,7 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 	std::vector <vk::PipelineColorBlendAttachmentState> color_blendings;
 
 	howl_assert(config.attachments.size() > 0, "expected >0 attachments");
-	
+
 	for (size_t i = 0; i < config.attachments.size(); i++) {
 		auto info = config.attachments[i];
 

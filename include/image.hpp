@@ -20,11 +20,11 @@ struct Texture {
 	static Texture from(const std::filesystem::path &, bool = true);
 };
 
-struct DepthImageConfiguration {
+struct DepthImageInfo {
 	vk::Extent2D size;
 };
 
-struct ImageConfiguration {
+struct ImageInfo {
 	vk::Format format;
 	vk::Extent2D size;
 	vk::ImageUsageFlags usage;
@@ -50,6 +50,6 @@ struct Image {
 
 	void transitionary_upload(const Device &, const vk::CommandBuffer &, const Texture &) const;
 
-	static Image from(const Device &, const ImageConfiguration &);
-	static Image from(const Device &, const DepthImageConfiguration &);
+	static Image from(const Device &, const ImageInfo &);
+	static Image from(const Device &, const DepthImageInfo &);
 };

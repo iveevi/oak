@@ -15,7 +15,7 @@ void Image::upload(const Device &device,
 	auto staging = Buffer::from(device,
 		texture.data,
 		vk::BufferUsageFlagBits::eTransferSrc);
-	
+
 	auto subresource = vk::ImageSubresourceLayers()
 		.setAspectMask(vk::ImageAspectFlagBits::eColor)
 		.setBaseArrayLayer(0)
@@ -103,19 +103,19 @@ void Image::transitionary_upload(const Device &device,
 		{ }, { }, { }, image_barrier);
 
 	upload(device, cmd, texture);
-	
+
 	image_barrier = image_barrier
 		.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
 		.setDstAccessMask(vk::AccessFlagBits::eNone)
 		.setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
 		.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
-	
+
 	cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
 		vk::PipelineStageFlagBits::eBottomOfPipe,
 		{ }, { }, { }, image_barrier);
 }
 
-Image Image::from(const Device &device, const ImageConfiguration &config)
+Image Image::from(const Device &device, const ImageInfo &config)
 {
 	Image result;
 

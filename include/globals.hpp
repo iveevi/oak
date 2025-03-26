@@ -8,3 +8,9 @@ struct VulkanGlobals {
 
 	static VulkanGlobals from(bool = true);
 } extern vk_globals;
+
+namespace oak {
+
+void configure();
+
+} // namespace oak

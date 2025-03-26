@@ -19,7 +19,7 @@ VKAPI_ATTR VKAPI_CALL VkBool32 vulkan_validation_logger(vk::DebugUtilsMessageSev
 	} else if (severity >= vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning) {
 		fmt::print(fmt::fg(fmt::color::yellow) | fmt::emphasis::italic, "{}\n", data->pMessage);
 	} else {
-		fmt::print(fmt::fg(fmt::color::sky_blue) | fmt::emphasis::italic, "{}\n", data->pMessage);
+		fmt::print(fmt::fg(fmt::color::dim_gray) | fmt::emphasis::italic, "{}\n", data->pMessage);
 	}
 
 	return VK_FALSE;
@@ -104,3 +104,12 @@ VulkanGlobals VulkanGlobals::from(bool enable_validation)
 
 	return result;
 }
+
+namespace oak {
+
+void configure()
+{
+	vk_globals = VulkanGlobals::from();
+}
+
+} // namespace oak

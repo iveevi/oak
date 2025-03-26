@@ -4,28 +4,27 @@
 
 // Vertex buffer; position (2) and color (3)
 constexpr float triangles[][5] {
-        {  0.0f, -0.5f, 1.0f, 0.0f, 0.0f },
-        {  0.5f,  0.5f, 0.0f, 1.0f, 0.0f },
-        { -0.5f,  0.5f, 0.0f, 0.0f, 1.0f },
+	{  0.0f, -0.5f, 1.0f, 0.0f, 0.0f },
+	{  0.5f,  0.5f, 0.0f, 1.0f, 0.0f },
+	{ -0.5f,  0.5f, 0.0f, 0.0f, 1.0f },
 };
 
 int main()
 {
-        // TODO: oak::configure();
-        vk_globals = VulkanGlobals::from();
+	oak::configure();
 
-        auto device = Device::create(true);
+	auto device = Device::create(true);
 
-        auto window = Window::from(device, "Font Rendering", vk::Extent2D(1920, 1080));
+	auto window = Window::from(device, "Hello Triangle", vk::Extent2D(1920, 1080));
 	auto resources = DeviceResources::from(device);
 
-        auto command_buffer_info = vk::CommandBufferAllocateInfo()
+	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
 		.setCommandBufferCount(window.images.size())
 		.setLevel(vk::CommandBufferLevel::ePrimary);
 
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
-	
+
 	// Render pass configuration
 	std::array <vk::AttachmentDescription, 1> attachments;
 
@@ -37,7 +36,7 @@ int main()
 		.setSamples(vk::SampleCountFlagBits::e1)
 		.setLoadOp(vk::AttachmentLoadOp::eClear)
 		.setStoreOp(vk::AttachmentStoreOp::eStore);
-	
+
 	std::array <vk::AttachmentReference, 1> color;
 
 	color[0] = vk::AttachmentReference()
@@ -67,52 +66,52 @@ int main()
 		framebuffers.emplace_back(device.createFramebuffer(fb_info));
 	}
 
-        // Shader programs
-        auto vertex = load_module(device, "examples/shaders/bin/hello_triangle.vert.spv");
-        auto fragment = load_module(device, "examples/shaders/bin/hello_triangle.frag.spv");
+	// Shader programs
+	auto vertex = load_module(device, "examples/shaders/bin/hello_triangle.vert.spv");
+	auto fragment = load_module(device, "examples/shaders/bin/hello_triangle.frag.spv");
 
-        struct Vertex {
-                static vk::VertexInputBindingDescription binding() {
-                        return vk::VertexInputBindingDescription()
-                                .setBinding(0)
-                                .setInputRate(vk::VertexInputRate::eVertex)
-                                .setStride(5 * sizeof(float));
-                }
+	struct Vertex {
+		static vk::VertexInputBindingDescription binding() {
+			return vk::VertexInputBindingDescription()
+				.setBinding(0)
+				.setInputRate(vk::VertexInputRate::eVertex)
+				.setStride(5 * sizeof(float));
+		}
 
-                static std::vector <vk::VertexInputAttributeDescription> attributes() {
-                        return {
-                                vk::VertexInputAttributeDescription()
-                                        .setBinding(0)
-                                        .setFormat(vk::Format::eR32G32Sfloat)
-                                        .setLocation(0)
-                                        .setOffset(0),
-                                vk::VertexInputAttributeDescription()
-                                        .setBinding(0)
-                                        .setFormat(vk::Format::eR32G32B32Sfloat)
-                                        .setLocation(1)
-                                        .setOffset(2 * sizeof(float)),
-                        };
-                }
-        };
+		static std::vector <vk::VertexInputAttributeDescription> attributes() {
+			return {
+				vk::VertexInputAttributeDescription()
+					.setBinding(0)
+					.setFormat(vk::Format::eR32G32Sfloat)
+					.setLocation(0)
+					.setOffset(0),
+				vk::VertexInputAttributeDescription()
+					.setBinding(0)
+					.setFormat(vk::Format::eR32G32B32Sfloat)
+					.setLocation(1)
+					.setOffset(2 * sizeof(float)),
+			};
+		}
+	};
 
-        auto config = RasterPipelineConfiguration <Vertex> ();
-        config.vertex = vertex;
-        config.fragment = fragment;
-        config.attachments = { true };
+	auto config = RasterPipelineInfo <Vertex> ()
+		.with_vertex(vertex)
+		.with_fragment(fragment)
+		.with_attachments(true);
 
-        auto pipeline = compile_pipeline(device, render_pass, config);
+	auto pipeline = compile_pipeline(device, render_pass, config);
 
-        // Vertex buffer
-        howl_info("vertex buffer size is {} bytes", sizeof(triangles));
+	// Vertex buffer
+	howl_info("vertex buffer size is {} bytes", sizeof(triangles));
 
-        auto vb = Buffer::from(device, sizeof(triangles), vk::BufferUsageFlagBits::eVertexBuffer);
+	auto vb = Buffer::from(device, sizeof(triangles), vk::BufferUsageFlagBits::eVertexBuffer);
 
-        vb.upload(device, triangles, sizeof(triangles), 0);
-        vb.name(device, "Vertex Buffer");
+	vb.upload(device, triangles, sizeof(triangles), 0);
+	vb.name(device, "Vertex Buffer");
 
-        auto render = [&](const vk::CommandBuffer &cmd, uint32_t image_index) {
+	auto render = [&](const vk::CommandBuffer &cmd, uint32_t image_index) {
 		auto &framebuffer = framebuffers[image_index];
-		
+
 		if (glfwGetKey(window.glfw, GLFW_KEY_Q) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window.glfw, true);
 			return;
@@ -148,7 +147,7 @@ int main()
 
 		cmd.beginRenderPass(rp_begin_info, vk::SubpassContents::eInline);
 
-                // Render the triangle
+		// Render the triangle
 		cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline.handle);
 		cmd.bindVertexBuffers(0, vb.handle, { 0 });
 		cmd.draw(3, 1, 0, 0);
@@ -158,7 +157,7 @@ int main()
 
 	auto resize = [&]() {
 		framebuffers.clear();
-	
+
 		for (auto &view : window.views) {
 			auto fb_info = vk::FramebufferCreateInfo()
 				.setAttachments(view)
