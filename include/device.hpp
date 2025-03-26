@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.hpp>
 
 #include "queue.hpp"
+#include "render-pass.hpp"
 
 namespace oak {
 
@@ -22,6 +23,8 @@ struct Device : public vk::PhysicalDevice, public vk::Device {
 
 	// Methods
 	Queue getQueue(uint32_t, uint32_t) const;
+
+	vk::RenderPass createRenderPass(const RenderPassInfo &) const;
 
 	vk::CommandPool createCommandPool(const Queue &) const;
 

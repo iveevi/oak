@@ -49,6 +49,15 @@ Queue Device::getQueue(uint32_t family, uint32_t index) const
 	return q;
 }
 
+vk::RenderPass Device::createRenderPass(const RenderPassInfo &info) const
+{
+	auto rp_info = vk::RenderPassCreateInfo()
+		.setAttachments(info.attachments)
+		.setSubpasses(info.subpasses);
+
+	return vk::Device::createRenderPass(rp_info);
+}
+
 vk::CommandPool Device::createCommandPool(const Queue &queue) const
 {
 	auto command_pool_info = vk::CommandPoolCreateInfo()

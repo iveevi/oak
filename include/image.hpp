@@ -31,6 +31,26 @@ struct ImageInfo {
 	vk::Extent2D size;
 	vk::ImageUsageFlags usage;
 	vk::ImageAspectFlags aspect;
+
+	ImageInfo &with_format(const vk::Format &format_) {
+		format = format_;
+		return *this;
+	}
+
+	ImageInfo &with_size(const vk::Extent2D &size_) {
+		size = size_;
+		return *this;
+	}
+
+	ImageInfo &with_usage(const vk::ImageUsageFlags &usage_) {
+		usage = usage_;
+		return *this;
+	}
+
+	ImageInfo &with_aspect(const vk::ImageAspectFlags &aspect_) {
+		aspect = aspect_;
+		return *this;
+	}
 };
 
 struct Image {

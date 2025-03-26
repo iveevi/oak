@@ -98,53 +98,41 @@ int main(int argc, char *argv[])
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
 	// Render pass configuration
-	std::array <vk::AttachmentDescription, 2> attachments;
+	auto rp_info = oak::RenderPassInfo();
 
-	// Color
-	attachments[0] = vk::AttachmentDescription()
-		.setFinalLayout(vk::ImageLayout::ePresentSrcKHR)
-		.setInitialLayout(vk::ImageLayout::eUndefined)
-		.setFormat(window.format)
-		.setSamples(vk::SampleCountFlagBits::e1)
-		.setLoadOp(vk::AttachmentLoadOp::eClear)
-		.setStoreOp(vk::AttachmentStoreOp::eStore);
-
-	attachments[1] = vk::AttachmentDescription()
-		.setFinalLayout(vk::ImageLayout::eDepthStencilReadOnlyOptimal)
-		.setInitialLayout(vk::ImageLayout::eUndefined)
-		.setFormat(vk::Format::eD32Sfloat)
-		.setSamples(vk::SampleCountFlagBits::e1)
-		.setLoadOp(vk::AttachmentLoadOp::eClear)
-		.setStoreOp(vk::AttachmentStoreOp::eStore);
-
-	std::array <vk::AttachmentReference, 1> color;
-	std::array <vk::AttachmentReference, 1> depth;
-
-	color[0] = vk::AttachmentReference()
-		.setAttachment(0)
-		.setLayout(vk::ImageLayout::eColorAttachmentOptimal);
-
-	depth[0] = vk::AttachmentReference()
-		.setAttachment(1)
-		.setLayout(vk::ImageLayout::eDepthStencilAttachmentOptimal);
-
-	auto sp_info = vk::SubpassDescription()
-		.setColorAttachments(color)
-		.setPDepthStencilAttachment(depth.data());
-
-	auto rp_info = vk::RenderPassCreateInfo()
-		.setAttachments(attachments)
-		.setSubpasses(sp_info);
+	rp_info.add_attachment()
+			.with_final_layout(vk::ImageLayout::ePresentSrcKHR)
+			.with_initial_layout(vk::ImageLayout::eUndefined)
+			.with_format(window.format)
+			.with_samples(vk::SampleCountFlagBits::e1)
+			.with_load_operation(vk::AttachmentLoadOp::eClear)
+			.with_store_operation(vk::AttachmentStoreOp::eStore)
+			.done()
+		.add_attachment()
+			.with_final_layout(vk::ImageLayout::eDepthStencilReadOnlyOptimal)
+			.with_initial_layout(vk::ImageLayout::eUndefined)
+			.with_format(vk::Format::eD32Sfloat)
+			.with_samples(vk::SampleCountFlagBits::e1)
+			.with_load_operation(vk::AttachmentLoadOp::eClear)
+			.with_store_operation(vk::AttachmentStoreOp::eStore)
+			.done()
+		.add_reference_collection()
+			.with_reference(0, vk::ImageLayout::eColorAttachmentOptimal)
+			.with_reference(1, vk::ImageLayout::eDepthStencilAttachmentOptimal)
+			.done()
+		.add_subpass()
+			.with_color_attachments(0)
+			.with_depth_attachment(1)
+			.done();
 
 	auto render_pass = device.createRenderPass(rp_info);
 
 	// Depth buffer
-	auto db_config = oak::ImageInfo {
-		.format = vk::Format::eD32Sfloat,
-		.size = window.extent(),
-		.usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
-		.aspect = vk::ImageAspectFlagBits::eDepth,
-	};
+	auto db_config = oak::ImageInfo()
+		.with_format(vk::Format::eD32Sfloat)
+		.with_size(window.extent())
+		.with_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment)
+		.with_aspect(vk::ImageAspectFlagBits::eDepth);
 
 	auto db = oak::Image::from(device, db_config);
 
