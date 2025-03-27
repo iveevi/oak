@@ -23,7 +23,19 @@ struct Texture {
 };
 
 struct DepthImageInfo {
+	vk::Format format;
 	vk::Extent2D size;
+
+	// TODO: check for valid formats...
+	DepthImageInfo &with_format(const vk::Format &format_) {
+		format = format_;
+		return *this;
+	}
+
+	DepthImageInfo &with_size(const vk::Extent2D &size_) {
+		size = size_;
+		return *this;
+	}
 };
 
 struct ImageInfo {

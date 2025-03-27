@@ -93,8 +93,6 @@ void Window::destroy(const Device &device)
 {
 	if (glfw)
 		glfwDestroyWindow(glfw);
-
-	device.destroySwapchainKHR(swapchain);
 }
 
 size_t Window::pixels() const

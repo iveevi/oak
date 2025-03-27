@@ -1,16 +1,11 @@
 #include <howler/howler.hpp>
 
-#include "util.hpp"
+#include "render-loop.hpp"
 #include "sync.hpp"
 
 namespace oak {
 
-void primary_render_loop(const Device &device,
-			 const DeviceResources &resources,
-			 Window &window,
-			 const Renderer &render,
-			 const std::optional <Resizer> &resize,
-			 const std::optional <AfterPresent> &after_present)
+void RenderLoopBuilder::launch()
 {
 	auto command_buffer_info = vk::CommandBufferAllocateInfo()
 		.setCommandPool(resources.command_pool)
@@ -19,7 +14,12 @@ void primary_render_loop(const Device &device,
 
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
+	// TODO: vector of commands...
+	for (auto &cmd : commands)
+		deallocator.collect(cmd, resources.command_pool);
+
 	auto sync = PrimarySynchronization::from(device, window.images.size());
+	deallocator.collect(sync);
 
 	uint32_t frame = 0;
 
@@ -45,8 +45,8 @@ void primary_render_loop(const Device &device,
 			window.resize(device);
 
 			// Optional callback
-			if (resize)
-				resize.value()();
+			if (resizer)
+				resizer.value()();
 
 			skip_reset = true;
 			continue;
@@ -59,7 +59,7 @@ void primary_render_loop(const Device &device,
 
 		cmd.begin(vk::CommandBufferBeginInfo());
 		{
-			render(cmd, image_index);
+			renderer(cmd, image_index);
 		}
 		cmd.end();
 
@@ -79,8 +79,8 @@ void primary_render_loop(const Device &device,
 			window.resize(device);
 
 			// Optional callback
-			if (resize)
-				resize.value()();
+			if (resizer)
+				resizer.value()();
 		} else if (status == eFaulty) {
 			howl_error("failed to present swapchain");
 			break;
@@ -95,35 +95,6 @@ void primary_render_loop(const Device &device,
 	}
 
 	device.waitIdle();
-}
-
-void transition(const vk::CommandBuffer &cmd,
-		const vk::Image &image,
-		const vk::ImageAspectFlagBits &aspect,
-		const vk::ImageLayout &older,
-		const vk::ImageLayout &newer,
-		const vk::AccessFlags &source_access,
-		const vk::AccessFlags &destination_access,
-		const vk::PipelineStageFlags &source_stage,
-		const vk::PipelineStageFlags &destination_stage)
-{
-	auto range = vk::ImageSubresourceRange()
-		.setAspectMask(aspect)
-		.setBaseArrayLayer(0)
-		.setBaseMipLevel(0)
-		.setLevelCount(1)
-		.setLayerCount(1);
-
-	auto image_barrier = vk::ImageMemoryBarrier()
-		.setImage(image)
-		.setSrcAccessMask(source_access)
-		.setDstAccessMask(destination_access)
-		.setNewLayout(newer)
-		.setOldLayout(older)
-		.setSubresourceRange(range);
-
-	cmd.pipelineBarrier(source_stage, destination_stage,
-		{ }, { }, { }, image_barrier);
 }
 
 } // namespace oak

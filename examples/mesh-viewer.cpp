@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
 	// Render pass configuration
-	auto rp_info = oak::RenderPassInfo();
+	auto rp_info = oak::RenderPassBuilder();
 
 	rp_info.add_attachment()
 			.with_final_layout(vk::ImageLayout::ePresentSrcKHR)

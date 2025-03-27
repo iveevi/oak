@@ -159,4 +159,15 @@ Image Image::from(const Device &device, const ImageInfo &config)
 	return result;
 }
 
+Image Image::from(const Device &device, const DepthImageInfo &config)
+{
+	auto image_info = ImageInfo()
+		.with_size(config.size)
+		.with_format(config.format)
+		.with_aspect(vk::ImageAspectFlagBits::eDepth)
+		.with_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment);
+
+	return Image::from(device, image_info);
+}
+
 } // namespace oak

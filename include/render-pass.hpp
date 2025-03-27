@@ -1,21 +1,23 @@
 #pragma once
 
-#include <vector>
-
-#include <vulkan/vulkan.hpp>
+#include "device.hpp"
 
 namespace oak {
 
-struct RenderPassInfo {
+struct RenderPassBuilder {
+	const Device &device;
+
 	std::vector <vk::AttachmentDescription> attachments;
 	std::vector <vk::AttachmentReference> references;
 	std::vector <vk::SubpassDescription> subpasses;
 
+	RenderPassBuilder(const Device &device_) : device(device_) {}
+
 	// Local override for an attachment description
 	struct AttachmentDescription : vk::AttachmentDescription {
-		RenderPassInfo &upper;
+		RenderPassBuilder &&upper;
 
-		AttachmentDescription(RenderPassInfo &upper_) : upper(upper_) {}
+		AttachmentDescription(RenderPassBuilder &&upper_) : upper(std::move(upper_)) {}
 
 		AttachmentDescription &with_initial_layout(const vk::ImageLayout &initial_) {
 			initialLayout = initial_;
@@ -47,7 +49,7 @@ struct RenderPassInfo {
 			return *this;
 		}
 
-		RenderPassInfo &done() {
+		RenderPassBuilder &done() {
 			upper.attachments.emplace_back(*this);
 			return upper;
 		}
@@ -55,9 +57,9 @@ struct RenderPassInfo {
 
 	// Local override for reference collection
 	struct ReferenceCollection : std::vector <vk::AttachmentReference> {
-		RenderPassInfo &upper;
+		RenderPassBuilder &&upper;
 
-		ReferenceCollection(RenderPassInfo &upper_) : upper(upper_) {}
+		ReferenceCollection(RenderPassBuilder &&upper_) : upper(std::move(upper_)) {}
 
 		ReferenceCollection &with_reference(uint32_t index, const vk::ImageLayout &layout) {
 			// TODO: check that indices are valid...
@@ -65,17 +67,17 @@ struct RenderPassInfo {
 			return *this;
 		}
 
-		RenderPassInfo &done() {
+		RenderPassBuilder &&done() {
 			upper.references = *this;
-			return upper;
+			return std::move(upper);
 		}
 	};
 
 	// Local override for subpass collection
 	struct SubpassInfo : vk::SubpassDescription {
-		RenderPassInfo &upper;
+		RenderPassBuilder &&upper;
 
-		SubpassInfo(RenderPassInfo &upper_) : upper(upper_) {}
+		SubpassInfo(RenderPassBuilder &&upper_) : upper(std::move(upper_)) {}
 
 		// TODO: variadic set of indices...
 		SubpassInfo &with_color_attachments(uint32_t index) {
@@ -88,23 +90,32 @@ struct RenderPassInfo {
 			return *this;
 		}
 
-		RenderPassInfo &done() {
+		RenderPassBuilder &&done() {
 			upper.subpasses.emplace_back(*this);
-			return upper;
+			return std::move(upper);
 		}
 	};
 
 	// TODO: with depth attachment...
-	AttachmentDescription add_attachment() & {
-		return AttachmentDescription(*this);
+	AttachmentDescription add_attachment() {
+		return AttachmentDescription(std::move(*this));
 	}
 
-	ReferenceCollection add_reference_collection() & {
-		return ReferenceCollection(*this);
+	ReferenceCollection add_reference_collection() {
+		return ReferenceCollection(std::move(*this));
 	}
 
-	SubpassInfo add_subpass() & {
-		return SubpassInfo(*this);
+	SubpassInfo add_subpass() {
+		return SubpassInfo(std::move(*this));
+	}
+
+	// Finally compile into a render pass
+	vk::RenderPass compile() {
+		auto rp_info = vk::RenderPassCreateInfo()
+			.setAttachments(attachments)
+			.setSubpasses(subpasses);
+
+		return device.createRenderPass(rp_info);
 	}
 };
 

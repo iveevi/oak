@@ -18,12 +18,14 @@ include_directories(include
 	thirdparty/glm)
 
 add_library(oak STATIC
-	source/device.cpp
+	source/deallocator.cpp
 	source/device-resources.cpp
-	source/image.cpp
+	source/device.cpp
 	source/globals.cpp
+	source/image.cpp
 	source/pfn.cpp
 	source/queue.cpp
+	source/render-loop.cpp
 	source/sbt.cpp
 	source/spirv.cpp
 	source/util.cpp

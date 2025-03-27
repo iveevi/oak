@@ -9,16 +9,16 @@
 namespace oak {
 
 // Render loop high level function
-using render_callback = std::function <void (const vk::CommandBuffer &, uint32_t)>;
-using resize_callback = std::function <void ()>;
-using after_present_callback = std::function <void ()>;
+using Renderer = std::function <void (const vk::CommandBuffer &, uint32_t)>;
+using Resizer = std::function <void ()>;
+using AfterPresent = std::function <void ()>;
 
 void primary_render_loop(const Device &,
 			 const DeviceResources &,
 			 Window &,
-			 const render_callback &,
-			 const std::optional <resize_callback> & = std::nullopt,
-			 const std::optional <after_present_callback> & = std::nullopt);
+			 const Renderer &,
+			 const std::optional <Resizer> & = std::nullopt,
+			 const std::optional <AfterPresent> & = std::nullopt);
 
 // Image layout transitioning
 void transition(const vk::CommandBuffer &,

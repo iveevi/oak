@@ -49,15 +49,6 @@ Queue Device::getQueue(uint32_t family, uint32_t index) const
 	return q;
 }
 
-vk::RenderPass Device::createRenderPass(const RenderPassInfo &info) const
-{
-	auto rp_info = vk::RenderPassCreateInfo()
-		.setAttachments(info.attachments)
-		.setSubpasses(info.subpasses);
-
-	return vk::Device::createRenderPass(rp_info);
-}
-
 vk::CommandPool Device::createCommandPool(const Queue &queue) const
 {
 	auto command_pool_info = vk::CommandPoolCreateInfo()
@@ -91,26 +82,31 @@ vk::DeviceAddress Device::getAddress(const vk::AccelerationStructureKHR &as) con
 	return getAccelerationStructureAddressKHR(info);
 }
 
-void Device::setName(const vk::Buffer &handle, const std::string &s) const
-{
-	auto info = vk::DebugUtilsObjectNameInfoEXT()
-		.setPObjectName(s.c_str())
-		.setObjectHandle(reinterpret_cast <int64_t> ((void *) handle))
-		.setObjectType(vk::ObjectType::eBuffer);
+// Naming Vulkan handles
+#define handle_namer(T, E)									\
+	void Device::name(const T &handle, const std::string &s) const				\
+	{											\
+		auto info = vk::DebugUtilsObjectNameInfoEXT()					\
+			.setPObjectName(s.c_str())						\
+			.setObjectHandle(reinterpret_cast <int64_t> ((void *) handle))		\
+			.setObjectType(vk::ObjectType::E);					\
+		return setDebugUtilsObjectNameEXT(info);					\
+	}
 
-	return setDebugUtilsObjectNameEXT(info);
-}
+handle_namer(vk::CommandBuffer,		eCommandBuffer);
+handle_namer(vk::RenderPass,		eRenderPass);
+handle_namer(vk::DeviceMemory,		eDeviceMemory);
+handle_namer(vk::Image,			eImage);
+handle_namer(vk::ImageView,		eImageView);
+handle_namer(vk::Buffer,		eBuffer);
+handle_namer(vk::Fence,			eFence);
+handle_namer(vk::Semaphore,		eSemaphore);
+handle_namer(vk::Framebuffer,		eFramebuffer);
+handle_namer(vk::SwapchainKHR,		eSwapchainKHR);
+handle_namer(vk::DescriptorPool,	eDescriptorPool);
+handle_namer(vk::CommandPool,		eCommandPool);
 
-void Device::setName(const vk::DeviceMemory &handle, const std::string &s) const
-{
-	auto info = vk::DebugUtilsObjectNameInfoEXT()
-		.setPObjectName(s.c_str())
-		.setObjectHandle(reinterpret_cast <int64_t> ((void *) handle))
-		.setObjectType(vk::ObjectType::eDeviceMemory);
-
-	return setDebugUtilsObjectNameEXT(info);
-}
-
+// Swapchain image retrieval
 std::pair <SwapchainStatus, uint32_t> Device::acquireNextImage(const vk::SwapchainKHR &swapchain, const vk::Semaphore &semaphore) const
 {
 	auto timeout = UINT64_MAX;
