@@ -9,7 +9,7 @@ struct DeviceResources {
 	vk::CommandPool command_pool;
 	vk::DescriptorPool descriptor_pool;
 
-	static DeviceResources from(const Device &);
+	static DeviceResources from(const Device &device);
 };
 
 } // namespace oak

@@ -10,6 +10,7 @@ find_package(assimp REQUIRED)
 add_compile_definitions(HOWLER_PREFIX="oak")
 
 set(HOWLER_FMT_EXTERNAL TRUE)
+
 add_subdirectory(thirdparty/fmt)
 add_subdirectory(thirdparty/howler)
 

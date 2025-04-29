@@ -17,16 +17,19 @@ struct Window {
 	std::vector <vk::ImageView> views;
 	vk::Format format;
 
-	void resize(const Device &);
+	void resize(const Device &device);
 
-	void destroy(const Device &);
+	void destroy(const Device &device);
 
 	size_t pixels() const;
+	size_t frames() const;
+
 	float aspect() const;
+	
 	vk::Extent2D extent() const;
 
-	static Window from(const Device &device, const std::string &, int, int);
-	static Window from(const Device &device, const std::string &, const vk::Extent2D &);
+	static Window from(const Device &device, const std::string &title, int32_t width, int32_t height);
+	static Window from(const Device &device, const std::string &title, const vk::Extent2D &extent);
 };
 
 } // namespace oak

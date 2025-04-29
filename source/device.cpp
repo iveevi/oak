@@ -136,6 +136,17 @@ std::pair <SwapchainStatus, uint32_t> Device::acquireNextImage(const vk::Swapcha
 	return { eReady, image_index };
 }
 
+// Allocation methods
+std::vector <vk::CommandBuffer> Device::allocateCommandBuffers(const vk::CommandPool &pool, uint32_t count, vk::CommandBufferLevel level) const
+{
+	auto info = vk::CommandBufferAllocateInfo()
+		.setCommandPool(pool)
+		.setCommandBufferCount(count)
+		.setLevel(level);
+
+	return allocateCommandBuffers(info);
+}
+
 vk::DeviceMemory Device::allocateMemoryRequirements(const vk::MemoryRequirements &requirements, const vk::MemoryPropertyFlags &properties) const
 {
 	auto memory_type_index = find_memory_type(memory_properties,

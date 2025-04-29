@@ -52,9 +52,25 @@ struct Device : public vk::PhysicalDevice, public vk::Device {
 	// Naming abstractions
 	void name(const Buffer &, const std::string &) const;
 
-	std::pair <SwapchainStatus, uint32_t> acquireNextImage(const vk::SwapchainKHR &, const vk::Semaphore &) const;
+	// Swapchain management
+	auto acquireNextImage(
+		const vk::SwapchainKHR &swapchain,
+		const vk::Semaphore &semaphore
+	) const -> std::pair <SwapchainStatus, uint32_t>;
 
-	vk::DeviceMemory allocateMemoryRequirements(const vk::MemoryRequirements &, const vk::MemoryPropertyFlags &) const;
+	// Allocation methods
+	using vk::Device::allocateCommandBuffers;
+
+	auto allocateCommandBuffers(
+		const vk::CommandPool &pool,
+		uint32_t count,
+		vk::CommandBufferLevel level
+	) const -> std::vector <vk::CommandBuffer>;
+
+	auto allocateMemoryRequirements(
+		const vk::MemoryRequirements &requirements,
+		const vk::MemoryPropertyFlags &properties
+	) const -> vk::DeviceMemory;
 
 	// Creation
 	static Device create(bool = false);

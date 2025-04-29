@@ -100,6 +100,11 @@ size_t Window::pixels() const
 	return width * height;
 }
 
+size_t Window::frames() const
+{
+	return views.size();
+}
+
 float Window::aspect() const
 {
         return float(width) / float(height);
@@ -120,7 +125,7 @@ Window Window::from(const Device &device, const std::string &title, int width, i
 
 	glfwGetFramebufferSize(result.glfw, &result.width, &result.height);
 
-	fmt::println("Window instantiated with size ({}, {})",
+	howl_info("window instantiated with size ({}, {})",
 		result.width,
 		result.height);
 
