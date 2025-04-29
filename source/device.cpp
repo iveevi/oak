@@ -4,6 +4,7 @@
 
 #include "device.hpp"
 #include "globals.hpp"
+#include "buffer.hpp"
 
 namespace oak {
 
@@ -22,7 +23,7 @@ uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &properties,
 	}
 
 	if (type_index == ~0u) {
-		fmt::println("No memory type found");
+		howl_error("failed to find memory type");
 		__builtin_trap();
 	}
 
@@ -105,6 +106,12 @@ handle_namer(vk::Framebuffer,		eFramebuffer);
 handle_namer(vk::SwapchainKHR,		eSwapchainKHR);
 handle_namer(vk::DescriptorPool,	eDescriptorPool);
 handle_namer(vk::CommandPool,		eCommandPool);
+
+void Device::name(const Buffer &buffer, const std::string &s) const
+{
+	name(buffer.memory, s + ".memory");
+	name(buffer.handle, s + ".handle");
+}
 
 // Swapchain image retrieval
 std::pair <SwapchainStatus, uint32_t> Device::acquireNextImage(const vk::SwapchainKHR &swapchain, const vk::Semaphore &semaphore) const

@@ -98,9 +98,9 @@ int main(int argc, char *argv[])
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
 	// Render pass configuration
-	auto rp_info = oak::RenderPassBuilder();
+	auto rpb = oak::RenderPassBuilder(device);
 
-	rp_info.add_attachment()
+	rpb.add_attachment()
 			.with_final_layout(vk::ImageLayout::ePresentSrcKHR)
 			.with_initial_layout(vk::ImageLayout::eUndefined)
 			.with_format(window.format)
@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 			.with_depth_attachment(1)
 			.done();
 
-	auto render_pass = device.createRenderPass(rp_info);
+	auto render_pass = rpb.compile();
 
 	// Depth buffer
 	auto db_config = oak::ImageInfo()

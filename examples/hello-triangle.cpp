@@ -29,9 +29,9 @@ int main()
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
 	// Render pass configuration
-	auto rp_info = oak::RenderPassBuilder();
+	auto rpb = oak::RenderPassBuilder(device);
 
-	rp_info.add_attachment()
+	rpb.add_attachment()
 			.with_final_layout(vk::ImageLayout::ePresentSrcKHR)
 			.with_initial_layout(vk::ImageLayout::eUndefined)
 			.with_format(window.format)
@@ -46,7 +46,7 @@ int main()
 			.with_color_attachments(0)
 			.done();
 
-	auto render_pass = device.createRenderPass(rp_info);
+	auto render_pass = rpb.compile();
 
 	// Framebuffer configuration
 	std::vector <vk::Framebuffer> framebuffers;
@@ -103,7 +103,8 @@ int main()
 	auto vb = oak::Buffer::from(device, sizeof(triangles), vk::BufferUsageFlagBits::eVertexBuffer);
 
 	vb.upload(device, triangles, sizeof(triangles), 0);
-	vb.name(device, "Vertex Buffer");
+
+	device.name(vb, "Vertex Buffer");
 
 	auto render = [&](const vk::CommandBuffer &cmd, uint32_t image_index) {
 		auto &framebuffer = framebuffers[image_index];

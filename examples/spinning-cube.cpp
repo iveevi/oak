@@ -75,9 +75,9 @@ int main()
 	auto commands = device.allocateCommandBuffers(command_buffer_info);
 
 	// Render pass configuration
-	auto rp_info = oak::RenderPassBuilder();
+	auto rpb = oak::RenderPassBuilder(device);
 
-	rp_info.add_attachment()
+	rpb.add_attachment()
 			.with_final_layout(vk::ImageLayout::ePresentSrcKHR)
 			.with_initial_layout(vk::ImageLayout::eUndefined)
 			.with_format(window.format)
@@ -102,7 +102,7 @@ int main()
 			.with_depth_attachment(1)
 			.done();
 
-	auto render_pass = device.createRenderPass(rp_info);
+	auto render_pass = rpb.compile();
 
 	// Depth buffer
 	auto db_config = oak::ImageInfo()
@@ -178,15 +178,15 @@ int main()
 	auto vb = oak::Buffer::from(device, vertices, vk::BufferUsageFlagBits::eVertexBuffer);
 	auto ib = oak::Buffer::from(device, triangles, vk::BufferUsageFlagBits::eIndexBuffer);
 
-	vb.name(device, "Vertex Buffer");
-	ib.name(device, "Index Buffer");
+	device.name(vb, "Vertex Buffer");
+	device.name(ib, "Index Buffer");
 
 	// View data
-	glm::mat4 view = glm::lookAt(
-                glm::vec3 { 0.0f, 0.0f, 5.0f },
-                glm::vec3 { 0.0f, 0.0f, 0.0f },
-                glm::vec3 { 0.0f, 1.0f, 0.0f }
-        );
+	glm::vec3 eye    = { 0.0f, 0.0f, 5.0f };
+	glm::vec3 center = { 0.0f, 0.0f, 0.0f };
+	glm::vec3 up     = { 0.0f, 1.0f, 5.0f };
+
+	glm::mat4 view = glm::lookAt(eye, center, up);
 
         auto render = [&](const vk::CommandBuffer &cmd, uint32_t image_index) {
                	auto &framebuffer = framebuffers[image_index];

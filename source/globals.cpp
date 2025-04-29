@@ -107,9 +107,9 @@ VulkanGlobals VulkanGlobals::from(bool enable_validation)
 	return result;
 }
 
-void configure()
+void configure(bool enable_validation)
 {
-	vk_globals = VulkanGlobals::from();
+	vk_globals = VulkanGlobals::from(enable_validation);
 }
 
 } // namespace oak

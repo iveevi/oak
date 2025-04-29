@@ -8,9 +8,9 @@ struct VulkanGlobals {
 	vk::Instance instance;
 	vk::DebugUtilsMessengerEXT debugger;
 
-	static VulkanGlobals from(bool = true);
+	static VulkanGlobals from(bool enable_validation = true);
 } extern vk_globals;
 
-void configure();
+void configure(bool enable_validation = true);
 
 } // namespace oak

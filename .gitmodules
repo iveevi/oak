@@ -1,6 +1,3 @@
-[submodule "thirdparty/howler"]
-	path = thirdparty/howler
-	url = https://github.com/iveevi/howler.git
 [submodule "thirdparty/fmt"]
 	path = thirdparty/fmt
 	url = https://github.com/fmtlib/fmt.git
@@ -10,3 +7,6 @@
 [submodule "thirdparty/stb"]
 	path = thirdparty/stb
 	url = https://github.com/nothings/stb
+[submodule "thirdparty/howler"]
+	path = thirdparty/howler
+	url = https://github.com/iveevi/howler.git

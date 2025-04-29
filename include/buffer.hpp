@@ -54,11 +54,6 @@ struct Buffer {
 		device.unmapMemory(memory);
 	}
 
-	// void name(const Device &device, const std::string &s) const {
-	// 	device.setName(handle, s + ".handle");
-	// 	device.setName(memory, s + ".memory");
-	// }
-
 	template <typename T>
 	static Buffer from(const Device &device, const std::vector <T> &data, const vk::BufferUsageFlags &usage) {
 		Buffer buffer;
