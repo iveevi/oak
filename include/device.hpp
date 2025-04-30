@@ -6,6 +6,8 @@
 
 namespace oak {
 
+using SPIRV = std::vector <uint32_t>;
+
 // Forward declarations
 struct Buffer;
 
@@ -59,6 +61,12 @@ struct Device : public vk::PhysicalDevice, public vk::Device {
 	) const -> std::pair <SwapchainStatus, uint32_t>;
 
 	// Allocation methods
+	using vk::Device::createShaderModule;
+
+	auto createShaderModule(
+		const SPIRV &
+	) const -> vk::ShaderModule;
+
 	using vk::Device::allocateCommandBuffers;
 
 	auto allocateCommandBuffers(

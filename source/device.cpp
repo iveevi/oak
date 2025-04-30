@@ -137,6 +137,12 @@ std::pair <SwapchainStatus, uint32_t> Device::acquireNextImage(const vk::Swapcha
 }
 
 // Allocation methods
+vk::ShaderModule Device::createShaderModule(const SPIRV &spirv) const
+{
+	auto info = vk::ShaderModuleCreateInfo().setCode(spirv);
+	return createShaderModule(info);
+}
+
 std::vector <vk::CommandBuffer> Device::allocateCommandBuffers(const vk::CommandPool &pool, uint32_t count, vk::CommandBufferLevel level) const
 {
 	auto info = vk::CommandBufferAllocateInfo()

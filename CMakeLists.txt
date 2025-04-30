@@ -11,7 +11,10 @@ add_compile_definitions(HOWLER_PREFIX="oak")
 
 set(HOWLER_FMT_EXTERNAL TRUE)
 
-add_subdirectory(thirdparty/fmt)
+if(NOT DEFINED OAK_FMT_EXTERNAL)
+	add_subdirectory(thirdparty/fmt)
+endif()
+
 add_subdirectory(thirdparty/howler)
 
 include_directories(include
