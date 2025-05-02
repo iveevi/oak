@@ -89,6 +89,11 @@ struct RenderPassBuilder {
 			setPDepthStencilAttachment(&upper.references[index]);
 			return *this;
 		}
+		
+		SubpassInfo &with_resolve_attachment(uint32_t index) {
+			setPResolveAttachments(&upper.references[index]);
+			return *this;
+		}
 
 		RenderPassBuilder &&done() {
 			upper.subpasses.emplace_back(*this);

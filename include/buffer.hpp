@@ -12,6 +12,10 @@ struct Buffer {
 	vk::DeviceMemory memory = nullptr;
 	size_t size = 0;
 
+	bool valid() const {
+		return (handle != nullptr) && (size != 0);
+	}
+
 	void destroy(const Device &device) const {
 		device.destroyBuffer(handle);
 		device.freeMemory(memory);

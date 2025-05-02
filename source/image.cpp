@@ -130,7 +130,7 @@ Image Image::from(const Device &device, const ImageInfo &config)
 		.setFormat(config.format)
 		.setInitialLayout(vk::ImageLayout::eUndefined)
 		.setMipLevels(1)
-		.setSamples(vk::SampleCountFlagBits::e1)
+		.setSamples(config.samples)
 		.setUsage(config.usage);
 
 	result.handle = device.createImage(info);
@@ -165,7 +165,8 @@ Image Image::from(const Device &device, const DepthImageInfo &config)
 		.with_size(config.size)
 		.with_format(config.format)
 		.with_aspect(vk::ImageAspectFlagBits::eDepth)
-		.with_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment);
+		.with_usage(vk::ImageUsageFlagBits::eDepthStencilAttachment)
+		.with_samples(config.samples);
 
 	return Image::from(device, image_info);
 }

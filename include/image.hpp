@@ -25,6 +25,7 @@ struct Texture {
 struct DepthImageInfo {
 	vk::Format format;
 	vk::Extent2D size;
+	vk::SampleCountFlagBits samples;
 
 	// TODO: check for valid formats...
 	DepthImageInfo &with_format(const vk::Format &format_) {
@@ -36,6 +37,11 @@ struct DepthImageInfo {
 		size = size_;
 		return *this;
 	}
+
+	DepthImageInfo &with_samples(const vk::SampleCountFlagBits &samples_) {
+		samples = samples_;
+		return *this;
+	}
 };
 
 struct ImageInfo {
@@ -43,6 +49,7 @@ struct ImageInfo {
 	vk::Extent2D size;
 	vk::ImageUsageFlags usage;
 	vk::ImageAspectFlags aspect;
+	vk::SampleCountFlagBits samples;
 
 	ImageInfo &with_format(const vk::Format &format_) {
 		format = format_;
@@ -61,6 +68,11 @@ struct ImageInfo {
 
 	ImageInfo &with_aspect(const vk::ImageAspectFlags &aspect_) {
 		aspect = aspect_;
+		return *this;
+	}
+
+	ImageInfo &with_samples(const vk::SampleCountFlagBits &samples_) {
+		samples = samples_;
 		return *this;
 	}
 };

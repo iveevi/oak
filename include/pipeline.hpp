@@ -50,6 +50,7 @@ struct RasterPipelineInfo {
 	std::vector <vk::DescriptorSetLayoutBinding> bindings;
 	std::optional <vk::ShaderModule> vertex;
 	std::optional <vk::ShaderModule> fragment;
+	vk::SampleCountFlagBits samples;
 	vk::PolygonMode fill;
 	std::vector <bool> attachments;
 	bool depth_write;
@@ -57,40 +58,45 @@ struct RasterPipelineInfo {
 
 	RasterPipelineInfo() : fill(vk::PolygonMode::eFill), depth_write(false), depth_test(false) {}
 
-	RasterPipelineInfo &with_bindings(const std::vector <vk::DescriptorSetLayoutBinding> &bindings_) {
+	auto &with_bindings(const std::vector <vk::DescriptorSetLayoutBinding> &bindings_) {
 		bindings = bindings_;
 		return *this;
 	}
 
-	RasterPipelineInfo &with_vertex(const std::optional <vk::ShaderModule> &vertex_) {
+	auto &with_vertex(const std::optional <vk::ShaderModule> &vertex_) {
 		vertex = vertex_;
 		return *this;
 	}
 
-	RasterPipelineInfo &with_fragment(const std::optional <vk::ShaderModule> &fragment_) {
+	auto &with_fragment(const std::optional <vk::ShaderModule> &fragment_) {
 		fragment = fragment_;
 		return *this;
 	}
 
-	RasterPipelineInfo &with_fill(const vk::PolygonMode &fill_) {
+	auto &with_fill(const vk::PolygonMode &fill_) {
 		fill = fill_;
 		return *this;
 	}
 
 	template <typename ... Ts>
 	requires (std::is_convertible_v <Ts, bool> && ...)
-	RasterPipelineInfo &with_attachments(const Ts &... ts) {
+	auto &with_attachments(const Ts &... ts) {
 		attachments = { ts... };
 		return *this;
 	}
 
-	RasterPipelineInfo &with_depth_write(bool depth_write_) {
+	auto &with_depth_write(bool depth_write_) {
 		depth_write = depth_write_;
 		return *this;
 	}
 
-	RasterPipelineInfo &with_depth_test(bool depth_test_) {
+	auto &with_depth_test(bool depth_test_) {
 		depth_test = depth_test_;
+		return *this;
+	}
+
+	auto &with_samples(const vk::SampleCountFlagBits &samples_) {
+		samples = samples_;
 		return *this;
 	}
 };
@@ -206,7 +212,8 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 		.setDepthBoundsTestEnable(false);
 
 	auto multisampling_state_info = vk::PipelineMultisampleStateCreateInfo()
-		.setRasterizationSamples(vk::SampleCountFlagBits::e1);
+		.setRasterizationSamples(config.samples)
+		.setSampleShadingEnable(true);
 
 	std::vector <vk::PipelineColorBlendAttachmentState> color_blendings;
 
@@ -217,7 +224,7 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 
 		auto state = vk::PipelineColorBlendAttachmentState()
 			.setBlendEnable(info)
-			.setSrcColorBlendFactor(vk::BlendFactor::eOne)
+			.setSrcColorBlendFactor(vk::BlendFactor::eSrcAlpha)
 			.setDstColorBlendFactor(vk::BlendFactor::eOneMinusSrcAlpha)
 			.setColorBlendOp(vk::BlendOp::eAdd)
 			.setSrcAlphaBlendFactor(vk::BlendFactor::eOne)
@@ -227,6 +234,9 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 				| vk::ColorComponentFlagBits::eG
 				| vk::ColorComponentFlagBits::eB
 				| vk::ColorComponentFlagBits::eA);
+
+		howl_info("blending for attachment @{} is {}",
+			i, info ? "enabled" : "disabled");
 
 		color_blendings.emplace_back(state);
 	}
