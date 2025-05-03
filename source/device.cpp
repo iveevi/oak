@@ -210,34 +210,43 @@ Device Device::create(bool renderdoc)
 	auto phdev = vk_globals.instance.enumeratePhysicalDevices().front();
 
 	// Query properties
-	auto pr_acceleration = vk::PhysicalDeviceAccelerationStructurePropertiesKHR();
-	auto pr_raytracing = vk::PhysicalDeviceRayTracingPipelinePropertiesKHR();
 	auto properties = vk::PhysicalDeviceProperties2KHR();
+	auto pr_raytracing = vk::PhysicalDeviceRayTracingPipelinePropertiesKHR();
+	auto pr_acceleration = vk::PhysicalDeviceAccelerationStructurePropertiesKHR();
+	auto pr_host_image = vk::PhysicalDeviceHostImageCopyPropertiesEXT();
 
 	properties.pNext = &pr_raytracing;
 	pr_raytracing.pNext = &pr_acceleration;
+	pr_acceleration.pNext = &pr_host_image;
 
 	phdev.getProperties2(&properties);
-
-	howl_info("acceleration structure properties:");
-	fmt::println("\tmax primitives: {}", pr_acceleration.maxPrimitiveCount);
-	fmt::println("\tmax geometry: {}", pr_acceleration.maxGeometryCount);
-	fmt::println("\tmax instances: {}", pr_acceleration.maxInstanceCount);
 
 	howl_info("raytracing properties:");
 	fmt::println("\tbase size: {}", pr_raytracing.shaderGroupBaseAlignment);
 	fmt::println("\thandle size: {}", pr_raytracing.shaderGroupHandleSize);
 	fmt::println("\thandle alignment: {}", pr_raytracing.shaderGroupHandleAlignment);
 
+	howl_info("acceleration structure properties:");
+	fmt::println("\tmax primitives: {}", pr_acceleration.maxPrimitiveCount);
+	fmt::println("\tmax geometry: {}", pr_acceleration.maxGeometryCount);
+	fmt::println("\tmax instances: {}", pr_acceleration.maxInstanceCount);
+
+	howl_info("host image copy properties:");
+	fmt::println("\tidentical memory type requirements: {}", pr_host_image.identicalMemoryTypeRequirements);
+
 	// Extensions for the devices
 	std::vector <const char *> device_extension_names {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
+		VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME,
 	};
 
 	// Logical device features
+	// TODO: method...
 	VulkanFeatureChain features;
 
 	features.add <vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR> ();
+	features.add <vk::PhysicalDeviceHostImageCopyFeaturesEXT> ();
 
 	if (!renderdoc) {
 		features.add <vk::PhysicalDeviceDescriptorIndexingFeaturesEXT> ();
@@ -245,17 +254,16 @@ Device Device::create(bool renderdoc)
 		features.add <vk::PhysicalDeviceRayTracingPipelineFeaturesKHR> ();
 		features.add <vk::PhysicalDeviceAccelerationStructureFeaturesKHR> ();
 
-		device_extension_names.insert(device_extension_names.end(),
-			{
-				VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME,
-				VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
-				VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
-				VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
-			});
+		device_extension_names.insert(device_extension_names.end(), {
+			VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
+			VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
+			VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
+		});
 	}
 
 	phdev.getFeatures2(&features.top);
 
+	// TODO: method
 	for (auto &ptr : features) {
 		switch (ptr->sType) {
 		feature_case(vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR)
@@ -272,6 +280,9 @@ Device Device::create(bool renderdoc)
 			break;
 		feature_case(vk::PhysicalDeviceRayTracingPipelineFeaturesKHR)
 			.setRayTracingPipeline(true);
+			break;
+		feature_case(vk::PhysicalDeviceHostImageCopyFeaturesEXT)
+			.setHostImageCopy(true);
 			break;
 		default:
 			howl_warning("unchecked feature #{}", (int) ptr->sType);

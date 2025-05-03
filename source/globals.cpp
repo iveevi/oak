@@ -72,9 +72,10 @@ VulkanGlobals VulkanGlobals::from(bool enable_validation)
 	if (enable_validation)
 		instance_layer_names.push_back("VK_LAYER_KHRONOS_validation");
 
+	// TODO: pass name...
 	auto application_info = vk::ApplicationInfo()
-		.setApiVersion(VK_API_VERSION_1_3)
-		.setPEngineName("Icarus");
+		.setApiVersion(VK_HEADER_VERSION_COMPLETE)
+		.setPEngineName("Oak");
 
 	auto instance_info = vk::InstanceCreateInfo()
 		.setPApplicationInfo(&application_info)

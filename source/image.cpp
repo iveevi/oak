@@ -10,32 +10,6 @@ void Image::destroy(const Device &device)
 	device.freeMemory(memory);
 }
 
-void Image::upload(const Device &device,
-		   const vk::CommandBuffer &cmd,
-		   const Texture &texture) const
-{
-	auto staging = Buffer::from(device,
-		texture.data,
-		vk::BufferUsageFlagBits::eTransferSrc);
-
-	auto subresource = vk::ImageSubresourceLayers()
-		.setAspectMask(vk::ImageAspectFlagBits::eColor)
-		.setBaseArrayLayer(0)
-		.setLayerCount(1)
-		.setMipLevel(0);
-
-	auto region = vk::BufferImageCopy()
-		.setImageOffset(vk::Offset3D(0, 0, 0))
-		.setBufferOffset(0)
-		.setImageSubresource(subresource)
-		.setImageExtent(vk::Extent3D(size, 1));
-
-	cmd.copyBufferToImage(staging.handle,
-		handle,
-		vk::ImageLayout::eTransferDstOptimal,
-		region);
-}
-
 void Image::download(const vk::CommandBuffer &cmd,
 		     const Buffer &destination,
 		     const vk::ImageLayout &incoming,
@@ -79,42 +53,6 @@ void Image::download(const vk::CommandBuffer &cmd,
 		vk::AccessFlagBits::eNone,
 		vk::PipelineStageFlagBits::eTransfer,
 		end);
-}
-
-void Image::transitionary_upload(const Device &device,
-				 const vk::CommandBuffer &cmd,
-				 const Texture &texture) const
-{
-	auto range = vk::ImageSubresourceRange()
-		.setAspectMask(vk::ImageAspectFlagBits::eColor)
-		.setBaseArrayLayer(0)
-		.setBaseMipLevel(0)
-		.setLevelCount(1)
-		.setLayerCount(1);
-
-	auto image_barrier = vk::ImageMemoryBarrier()
-		.setImage(handle)
-		.setSrcAccessMask(vk::AccessFlagBits::eNone)
-		.setDstAccessMask(vk::AccessFlagBits::eTransferWrite)
-		.setNewLayout(vk::ImageLayout::eTransferDstOptimal)
-		.setOldLayout(vk::ImageLayout::eUndefined)
-		.setSubresourceRange(range);
-
-	cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTopOfPipe,
-		vk::PipelineStageFlagBits::eTransfer,
-		{ }, { }, { }, image_barrier);
-
-	upload(device, cmd, texture);
-
-	image_barrier = image_barrier
-		.setSrcAccessMask(vk::AccessFlagBits::eTransferWrite)
-		.setDstAccessMask(vk::AccessFlagBits::eNone)
-		.setNewLayout(vk::ImageLayout::eShaderReadOnlyOptimal)
-		.setOldLayout(vk::ImageLayout::eTransferDstOptimal);
-
-	cmd.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
-		vk::PipelineStageFlagBits::eBottomOfPipe,
-		{ }, { }, { }, image_barrier);
 }
 
 Image Image::from(const Device &device, const ImageInfo &config)

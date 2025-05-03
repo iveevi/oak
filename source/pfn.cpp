@@ -192,3 +192,14 @@ VkResult vkSetDebugUtilsObjectNameEXT
 		device,
 		pNameInfo);
 }
+
+VKAPI_ATTR
+VKAPI_CALL
+VkResult vkCopyMemoryToImageEXT
+(
+	VkDevice device,
+	const VkCopyMemoryToImageInfoEXT *pCopyInfo)
+{
+	PFN_SETUP(vkCopyMemoryToImageEXT,
+		device, pCopyInfo);
+}
