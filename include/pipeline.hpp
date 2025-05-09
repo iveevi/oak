@@ -146,8 +146,23 @@ RasterPipeline <Vconst, Fconst> compile_pipeline(const Device &device,
 
 	// Descriptor set layout
 	if (config.bindings.size()) {
+		std::vector <vk::DescriptorBindingFlags> flags;
+
+		for (auto &_ : config.bindings) {
+			auto flag = vk::DescriptorBindingFlagBits::ePartiallyBound
+				| vk::DescriptorBindingFlagBits::eUpdateAfterBind
+				| vk::DescriptorBindingFlagBits::eUpdateUnusedWhilePending;
+			
+			flags.emplace_back(flag);
+		}
+
+		auto binding_info = vk::DescriptorSetLayoutBindingFlagsCreateInfoEXT()
+			.setBindingFlags(flags);
+    
 		auto dsl_info = vk::DescriptorSetLayoutCreateInfo()
-			.setBindings(config.bindings);
+			.setFlags(vk::DescriptorSetLayoutCreateFlagBits::eUpdateAfterBindPoolEXT)
+			.setBindings(config.bindings)
+			.setPNext(&binding_info);
 
 		result.dsl = device.createDescriptorSetLayout(dsl_info);
 	}

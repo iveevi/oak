@@ -73,8 +73,12 @@ Image Image::from(const Device &device, const ImageInfo &config)
 
 	result.handle = device.createImage(info);
 
-	auto depth_memory_requirements = device.getImageMemoryRequirements(result.handle);
-	result.memory = device.allocateMemoryRequirements(depth_memory_requirements, vk::MemoryPropertyFlagBits::eDeviceLocal);
+	auto memory_requirements = device.getImageMemoryRequirements(result.handle);
+	
+	result.memory = device.allocateMemoryRequirements(
+		memory_requirements,
+		vk::MemoryPropertyFlagBits::eDeviceLocal
+	);
 
 	device.bindImageMemory(result.handle, result.memory, 0);
 

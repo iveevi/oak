@@ -56,6 +56,7 @@ VulkanGlobals VulkanGlobals::from(bool enable_validation)
 		fmt::println("\t{}", ext);
 
 	// Debug printf
+	// TODO: pass options...
 	auto enabled_features = std::vector <vk::ValidationFeatureEnableEXT> {
 		// vk::ValidationFeatureEnableEXT::eDebugPrintf,
 		// vk::ValidationFeatureEnableEXT::eGpuAssisted,

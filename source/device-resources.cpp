@@ -24,7 +24,8 @@ DeviceResources DeviceResources::from(const Device &device)
 	}
 
 	auto descriptor_pool_info = vk::DescriptorPoolCreateInfo()
-		.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet)
+		.setFlags(vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet
+			| vk::DescriptorPoolCreateFlagBits::eUpdateAfterBindEXT)
 		.setPoolSizes(pool_sizes)
 		.setMaxSets(1 << 10);
 

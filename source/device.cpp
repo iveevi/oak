@@ -8,28 +8,6 @@
 
 namespace oak {
 
-uint32_t find_memory_type(const vk::PhysicalDeviceMemoryProperties &properties,
-			  uint32_t filter,
-			  vk::MemoryPropertyFlags flags)
-{
-	uint32_t type_index = ~0u;
-	for (uint32_t i = 0; i < properties.memoryTypeCount; i++) {
-		if ((filter & 1) && (properties.memoryTypes[i].propertyFlags & flags) == flags) {
-			type_index = i;
-			break;
-		}
-
-		filter >>= 1;
-	}
-
-	if (type_index == ~0u) {
-		howl_error("failed to find memory type");
-		__builtin_trap();
-	}
-
-	return type_index;
-}
-
 // Device methods
 Device::Device(const vk::PhysicalDevice &phdev, const vk::Device &lgdev)
 		: vk::PhysicalDevice(phdev), vk::Device(lgdev)
@@ -153,11 +131,21 @@ std::vector <vk::CommandBuffer> Device::allocateCommandBuffers(const vk::Command
 	return allocateCommandBuffers(info);
 }
 
+uint32_t Device::findMemoryType(uint32_t filter, const vk::MemoryPropertyFlags &flags) const
+{
+	for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
+		bool a = (filter & (1 << i)) == (1 << i);
+		bool b = (memory_properties.memoryTypes[i].propertyFlags & flags) == flags;
+		if (a && b)
+			return i;
+	}
+
+	howl_fatal("failed to find memory type");
+}
+
 vk::DeviceMemory Device::allocateMemoryRequirements(const vk::MemoryRequirements &requirements, const vk::MemoryPropertyFlags &properties) const
 {
-	auto memory_type_index = find_memory_type(memory_properties,
-		requirements.memoryTypeBits,
-		properties);
+	auto memory_type_index = findMemoryType(requirements.memoryTypeBits, properties);
 
 	auto memory_flags = vk::MemoryAllocateFlagsInfo()
 		.setFlags(vk::MemoryAllocateFlagBits::eDeviceAddress);
@@ -198,11 +186,59 @@ struct VulkanFeatureChain : std::vector <VulkanFeatureBase *> {
 
 		push_back(ptr);
 	}
-};
 
-#define feature_case(Type)				\
-	case (VkStructureType) Type::structureType:	\
-		(*reinterpret_cast <Type *> (ptr))
+	#define feature_case(Type)				\
+		case (VkStructureType) Type::structureType:	\
+			(*reinterpret_cast <Type *> (ptr))
+
+	void activate(const vk::PhysicalDevice &phdev) {
+		phdev.getFeatures2(&top);
+
+		for (auto &ptr : *this) {
+			switch (ptr->sType) {
+			feature_case(vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR)
+				.setBufferDeviceAddress(true);
+				break;
+			feature_case(vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT)
+				.setScalarBlockLayout(true);
+				break;
+			feature_case(vk::PhysicalDeviceDescriptorIndexingFeatures)
+				.setRuntimeDescriptorArray(true)
+				.setDescriptorBindingStorageBufferUpdateAfterBind(true)
+				.setDescriptorBindingSampledImageUpdateAfterBind(true);
+				break;
+			feature_case(vk::PhysicalDeviceAccelerationStructureFeaturesKHR)
+				.setAccelerationStructure(true);
+				break;
+			feature_case(vk::PhysicalDeviceRayTracingPipelineFeaturesKHR)
+				.setRayTracingPipeline(true);
+				break;
+			feature_case(vk::PhysicalDeviceHostImageCopyFeaturesEXT)
+				.setHostImageCopy(true);
+				break;
+			default:
+				howl_error("unchecked feature #{}", (int) ptr->sType);
+				break;
+			}
+		}
+	}
+
+	static auto basline(bool renderdoc) -> VulkanFeatureChain {
+		VulkanFeatureChain features;
+
+		features.add <vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR> ();
+		features.add <vk::PhysicalDeviceHostImageCopyFeaturesEXT> ();
+		features.add <vk::PhysicalDeviceDescriptorIndexingFeatures> ();
+
+		if (!renderdoc) {
+			features.add <vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT> ();
+			features.add <vk::PhysicalDeviceRayTracingPipelineFeaturesKHR> ();
+			features.add <vk::PhysicalDeviceAccelerationStructureFeaturesKHR> ();
+		}
+
+		return features;
+	}
+};
 
 Device Device::create(bool renderdoc)
 {
@@ -242,53 +278,17 @@ Device Device::create(bool renderdoc)
 	};
 
 	// Logical device features
-	// TODO: method...
-	VulkanFeatureChain features;
-
-	features.add <vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR> ();
-	features.add <vk::PhysicalDeviceHostImageCopyFeaturesEXT> ();
-
+	// TODO: pass features...
 	if (!renderdoc) {
-		features.add <vk::PhysicalDeviceDescriptorIndexingFeaturesEXT> ();
-		features.add <vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT> ();
-		features.add <vk::PhysicalDeviceRayTracingPipelineFeaturesKHR> ();
-		features.add <vk::PhysicalDeviceAccelerationStructureFeaturesKHR> ();
-
 		device_extension_names.insert(device_extension_names.end(), {
 			VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
 			VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME,
 			VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME
 		});
 	}
-
-	phdev.getFeatures2(&features.top);
-
-	// TODO: method
-	for (auto &ptr : features) {
-		switch (ptr->sType) {
-		feature_case(vk::PhysicalDeviceBufferDeviceAddressFeaturesKHR)
-			.setBufferDeviceAddress(true);
-			break;
-		feature_case(vk::PhysicalDeviceScalarBlockLayoutFeaturesEXT)
-			.setScalarBlockLayout(true);
-			break;
-		feature_case(vk::PhysicalDeviceDescriptorIndexingFeaturesEXT)
-			.setRuntimeDescriptorArray(true);
-			break;
-		feature_case(vk::PhysicalDeviceAccelerationStructureFeaturesKHR)
-			.setAccelerationStructure(true);
-			break;
-		feature_case(vk::PhysicalDeviceRayTracingPipelineFeaturesKHR)
-			.setRayTracingPipeline(true);
-			break;
-		feature_case(vk::PhysicalDeviceHostImageCopyFeaturesEXT)
-			.setHostImageCopy(true);
-			break;
-		default:
-			howl_warning("unchecked feature #{}", (int) ptr->sType);
-			break;
-		}
-	}
+	
+	auto features = VulkanFeatureChain::basline(renderdoc);
+	features.activate(phdev);
 
 	// Construct the logical device handle
 	auto priority = 1.0f;

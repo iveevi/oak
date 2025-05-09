@@ -75,6 +75,11 @@ struct Device : public vk::PhysicalDevice, public vk::Device {
 		vk::CommandBufferLevel level
 	) const -> std::vector <vk::CommandBuffer>;
 
+	auto findMemoryType(
+		uint32_t filter,
+		const vk::MemoryPropertyFlags &properties
+	) const -> uint32_t;
+
 	auto allocateMemoryRequirements(
 		const vk::MemoryRequirements &requirements,
 		const vk::MemoryPropertyFlags &properties
